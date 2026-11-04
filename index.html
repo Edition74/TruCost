@@ -84,10 +84,52 @@
       <div id="lifebar"></div>
     </div>
     <dl id="details" class="card"></dl>
+
+    <section class="card" id="saveCard">
+      <h2 class="pill v">Save to your list</h2>
+      <label class="plain">Name
+        <input id="itemName" type="text" maxlength="60" placeholder="e.g. New laptop">
+      </label>
+      <fieldset class="seg spaced" aria-label="Status">
+        <label><input type="radio" name="status" value="planned" checked><span>Planned</span></label>
+        <label><input type="radio" name="status" value="bought"><span>Already bought</span></label>
+      </fieldset>
+      <label class="plain" id="dateRow" hidden>Date bought (optional)
+        <input id="itemDate" type="date">
+      </label>
+      <label class="check"><input type="checkbox" id="useCurrent" checked><span>Use my current pay for this item</span></label>
+      <div id="customPay" hidden>
+        <fieldset class="seg" aria-label="Pay period at the time">
+          <label><input type="radio" name="cperiod" value="hourly"><span>Hourly</span></label>
+          <label><input type="radio" name="cperiod" value="daily"><span>Daily</span></label>
+          <label><input type="radio" name="cperiod" value="weekly"><span>Weekly</span></label>
+          <label><input type="radio" name="cperiod" value="monthly"><span>Monthly</span></label>
+          <label><input type="radio" name="cperiod" value="annual" checked><span>Yearly</span></label>
+        </fieldset>
+        <div class="field" data-id="cEarn" data-label="Pay per year" data-prefix="£" data-min="10000" data-max="300000" data-step="500" data-value="55000"></div>
+        <div class="field" data-id="cHours" data-label="Paid hours per week" data-suffix="hrs" data-min="1" data-max="70" data-step="0.5" data-value="40"></div>
+      </div>
+      <p class="lb-note muted" id="savePreview"></p>
+      <button id="save" type="button" class="btn2">Add to my list</button>
+      <p class="lb-note muted" id="saveMsg" aria-live="polite"></p>
+    </section>
+  </section>
+
+  <section class="card" id="listSection">
+    <h2 class="pill p">Your list</h2>
+    <div id="totals"></div>
+    <fieldset class="seg spaced" id="filterSeg" aria-label="Filter list" hidden>
+      <label><input type="radio" name="filter" value="all" checked><span>All</span></label>
+      <label><input type="radio" name="filter" value="planned"><span>Planned</span></label>
+      <label><input type="radio" name="filter" value="bought"><span>Bought</span></label>
+    </fieldset>
+    <ul id="list" class="items"></ul>
+    <button id="clearBtn" type="button" class="linkbtn" hidden>Clear list</button>
+    <p class="lb-note muted">Saved on this device only. Nothing is sent anywhere.</p>
   </section>
 
   <footer>
-    <p>Draft v0.4. Tax is a UK estimate (England, Wales, NI). Hourly and daily pay is counted for weeks worked only. Life expectancy is a rough estimate, not a prediction. Nothing you enter leaves your device.</p>
+    <p>Draft v0.5. Tax is a UK estimate (England, Wales, NI). Hourly and daily pay is counted for weeks worked only. Life expectancy is a rough estimate, not a prediction. Nothing you enter leaves your device.</p>
   </footer>
 </main>
 <script src="calc.js"></script>
