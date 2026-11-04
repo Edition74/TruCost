@@ -34,6 +34,30 @@ function estimateTakeHome(gross, extraDeductionPct = 0) {
   return { incomeTax, ni, other, takeHome: gross - incomeTax - ni - other };
 }
 
+// Convert a pay figure in any period to an annual figure, and back.
+// Weekly, monthly and yearly pay is treated as paid all year (holiday is paid).
+// Hourly and daily pay is treated as paid only for the weeks actually worked.
+function annualise(amount, period, hoursPerWeek, holidayWeeks = 5) {
+  const weeks = 52 - holidayWeeks;
+  switch (period) {
+    case 'hourly':  return amount * hoursPerWeek * weeks;
+    case 'daily':   return amount * (hoursPerWeek / 8) * weeks;
+    case 'weekly':  return amount * 52;
+    case 'monthly': return amount * 12;
+    default:        return amount;
+  }
+}
+function fromAnnual(annual, period, hoursPerWeek, holidayWeeks = 5) {
+  const weeks = 52 - holidayWeeks;
+  switch (period) {
+    case 'hourly':  return annual / (hoursPerWeek * weeks);
+    case 'daily':   return annual / ((hoursPerWeek / 8) * weeks);
+    case 'weekly':  return annual / 52;
+    case 'monthly': return annual / 12;
+    default:        return annual;
+  }
+}
+
 const HOURS_AWAKE_PER_DAY = 16;
 const WEEKS_PER_YEAR = 52;
 
@@ -87,4 +111,4 @@ function calculate(input) {
   };
 }
 
-if (typeof module !== 'undefined') module.exports = { calculate, expectedAgeAtDeath, estimateTakeHome };
+if (typeof module !== 'undefined') module.exports = { calculate, expectedAgeAtDeath, estimateTakeHome, annualise, fromAnnual };

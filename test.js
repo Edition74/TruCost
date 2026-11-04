@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { calculate, expectedAgeAtDeath, estimateTakeHome } = require('./calc');
+const { calculate, expectedAgeAtDeath, estimateTakeHome, annualise, fromAnnual } = require('./calc');
 
 // Survivor adjustment is in the expected range
 assert(Math.abs(expectedAgeAtDeath(40, 'male') - 81.5) < 0.5);
@@ -30,5 +30,14 @@ const p = estimateTakeHome(50000);
 assert(Math.abs(p.takeHome - 39519.6) < 0.5);
 assert.strictEqual(estimateTakeHome(10000).takeHome, 10000); // under allowance
 assert(estimateTakeHome(150000).takeHome < 150000 * 0.65);   // additional rate bites
+
+// Pay conversion: £25/hr, 40h, 47 weeks => £47,000; round-trips for every period
+assert.strictEqual(annualise(25, 'hourly', 40, 5), 47000);
+assert.strictEqual(annualise(200, 'daily', 40, 5), 47000);
+assert.strictEqual(annualise(1000, 'weekly', 40, 5), 52000);
+assert.strictEqual(annualise(4000, 'monthly', 40, 5), 48000);
+for (const p of ['hourly', 'daily', 'weekly', 'monthly', 'annual']) {
+  assert(Math.abs(fromAnnual(annualise(37, p, 37.5, 6), p, 37.5, 6) - 37) < 1e-9);
+}
 
 console.log('All tests passed');

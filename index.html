@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TruCost</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;800&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,59 +16,69 @@
     <p class="tag">What does it really cost you? Not in money, in life.</p>
   </header>
 
-  <form id="form" class="card" autocomplete="off">
-    <h2>What are you buying?</h2>
-    <div class="row">
-      <label>Price (£)<input id="price" type="number" min="0" step="any" inputmode="decimal" placeholder="e.g. 1200"></label>
-      <label>How often
-        <select id="frequency">
-          <option value="once">One-off</option>
-          <option value="monthly">Per month, for life</option>
-          <option value="yearly">Per year, for life</option>
-        </select>
-      </label>
-    </div>
+  <form id="form" autocomplete="off" novalidate>
+    <section class="card">
+      <h2>What are you buying?</h2>
+      <div class="field" data-id="price" data-label="Price" data-prefix="£" data-min="1" data-max="100000" data-log data-value="1200"></div>
+      <fieldset class="seg" aria-label="How often you pay">
+        <label><input type="radio" name="frequency" value="once" checked><span>One-off</span></label>
+        <label><input type="radio" name="frequency" value="monthly"><span>Every month</span></label>
+        <label><input type="radio" name="frequency" value="yearly"><span>Every year</span></label>
+      </fieldset>
+    </section>
 
-    <h2>You</h2>
-    <div class="row">
-      <label>Age<input id="age" type="number" min="16" max="110" inputmode="numeric" placeholder="e.g. 45"></label>
-      <label>Sex (for life expectancy)
+    <section class="card">
+      <h2>What do you earn before tax?</h2>
+      <fieldset class="seg" aria-label="Pay period">
+        <label><input type="radio" name="period" value="hourly"><span>Hourly</span></label>
+        <label><input type="radio" name="period" value="daily"><span>Daily</span></label>
+        <label><input type="radio" name="period" value="weekly"><span>Weekly</span></label>
+        <label><input type="radio" name="period" value="monthly"><span>Monthly</span></label>
+        <label><input type="radio" name="period" value="annual" checked><span>Yearly</span></label>
+      </fieldset>
+      <div class="field" data-id="earn" data-label="Pay per year" data-prefix="£" data-min="10000" data-max="300000" data-step="500" data-value="55000"></div>
+      <div class="field" data-id="hours" data-label="Paid hours per week" data-suffix="hrs" data-min="1" data-max="70" data-step="0.5" data-value="40"></div>
+    </section>
+
+    <section class="card">
+      <h2>About you</h2>
+      <div class="field" data-id="age" data-label="Your age" data-suffix="yrs" data-min="16" data-max="90" data-step="1" data-value="45"></div>
+      <label class="plain">Sex, used for life expectancy
         <select id="sex">
           <option value="average">Prefer not to say</option>
           <option value="male">Male</option>
           <option value="female">Female</option>
         </select>
       </label>
-    </div>
-    <div class="row">
-      <label>Annual salary before tax (£)<input id="gross" type="number" min="0" step="any" inputmode="decimal" placeholder="e.g. 55000"></label>
-      <label>Paid hours per week<input id="hours" type="number" min="1" max="100" step="any" inputmode="decimal" value="40"></label>
-    </div>
+    </section>
 
-    <details>
+    <details class="card">
       <summary>Fine-tune (optional)</summary>
-      <div class="row">
-        <label>Commute and work-related hours per week<input id="commute" type="number" min="0" step="any" inputmode="decimal" value="5"></label>
-        <label>Holiday weeks per year<input id="holiday" type="number" min="0" max="30" step="any" inputmode="decimal" value="5"></label>
-      </div>
-      <div class="row">
-        <label>Other deductions, % of salary (pension, student loan)<input id="otherPct" type="number" min="0" max="60" step="any" inputmode="decimal" value="0"></label>
-        <label>Retirement age<input id="retire" type="number" min="40" max="90" inputmode="numeric" value="67"></label>
-        <label>Expected age at death (leave blank to estimate)<input id="lifeExp" type="number" min="20" max="120" inputmode="numeric" placeholder="auto"></label>
-      </div>
+      <div class="field" data-id="commute" data-label="Commute and work-related hours per week" data-suffix="hrs" data-min="0" data-max="25" data-step="0.5" data-value="5"></div>
+      <div class="field" data-id="holiday" data-label="Holiday weeks per year" data-suffix="wks" data-min="0" data-max="12" data-step="0.5" data-value="5"></div>
+      <div class="field" data-id="otherPct" data-label="Other deductions: pension, student loan" data-suffix="%" data-min="0" data-max="40" data-step="0.5" data-value="0"></div>
+      <div class="field" data-id="retire" data-label="Retirement age" data-suffix="yrs" data-min="50" data-max="80" data-step="1" data-value="67"></div>
+      <label class="plain">Expected age at death (leave blank to estimate)
+        <input id="lifeExp" type="number" min="20" max="120" inputmode="numeric" placeholder="Estimated for you">
+      </label>
     </details>
+
+    <button id="run" type="button">Calculate true cost</button>
   </form>
 
-  <button id="run" type="button" form="form">Calculate true cost</button>
-
-  <section class="card" id="result" aria-live="polite" hidden>
-    <div class="big" id="bigNumber"></div>
-    <div class="sub" id="bigSub"></div>
-    <dl id="details"></dl>
+  <section id="result" aria-live="polite" hidden>
+    <div class="hero">
+      <div class="hero-label">This costs you</div>
+      <div class="big" id="bigNumber"></div>
+      <div class="sub" id="bigSub"></div>
+      <div id="tiles" class="tiles"></div>
+      <div id="lifebar"></div>
+    </div>
+    <dl id="details" class="card"></dl>
   </section>
 
   <footer>
-    <p>Draft v0.2. Tax is a UK estimate (England, Wales, NI). Life expectancy is a rough estimate, not a prediction. Nothing you enter leaves your device.</p>
+    <p>Draft v0.3. Tax is a UK estimate (England, Wales, NI). Hourly and daily pay is counted for weeks worked only. Life expectancy is a rough estimate, not a prediction. Nothing you enter leaves your device.</p>
   </footer>
 </main>
 <script src="calc.js"></script>
