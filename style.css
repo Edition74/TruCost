@@ -38,7 +38,7 @@ form { display: flex; flex-direction: column; gap: 16px; }
 .wordmark { font-family: var(--serif); font-weight: 800; font-size: 22px; letter-spacing: -0.3px; }
 .wordmark b { color: var(--accent); font-weight: 800; }
 header h1 { font-family: var(--serif); font-weight: 800; font-size: clamp(34px, 10vw, 48px); line-height: 1.08; letter-spacing: -1px; margin: 18px 0 8px; text-wrap: balance; }
-header h1 mark { background: var(--c-yellow); color: var(--navy); padding: 0 10px 2px; margin: 0 -2px; border-radius: 12px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+header h1 mark { display: inline-block; background: var(--c-yellow); color: var(--navy); line-height: 1.12; padding: 0 7px; margin: 0 1px; border-radius: 9px; }
 .tag { margin: 0; color: var(--muted); font-weight: 500; }
 
 /* Cards and pill headings */
