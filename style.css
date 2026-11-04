@@ -23,3 +23,6 @@ input, select { font: inherit; padding: 10px; border: 1px solid var(--line); bor
 summary { cursor: pointer; color: var(--muted); margin: 4px 0 12px; }
 footer { color: var(--muted); font-size: 13px; text-align: center; padding-bottom: 24px; }
 @media (max-width: 480px) { .row { grid-template-columns: 1fr; } }
+button#run { font: inherit; font-weight: 600; padding: 14px; border: 0; border-radius: 10px; background: var(--accent); color: #fff; cursor: pointer; }
+button#run:active { opacity: .85; }
+[hidden] { display: none !important; }

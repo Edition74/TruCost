@@ -13,12 +13,6 @@
     <p class="tag">What does it really cost you? Not in money, in life.</p>
   </header>
 
-  <section class="card" id="result" aria-live="polite">
-    <div class="big" id="bigNumber">Enter a price</div>
-    <div class="sub" id="bigSub">Fill in the details below to see what it costs you in time and life.</div>
-    <dl id="details"></dl>
-  </section>
-
   <form id="form" class="card" autocomplete="off">
     <h2>What are you buying?</h2>
     <div class="row">
@@ -44,7 +38,7 @@
       </label>
     </div>
     <div class="row">
-      <label>Annual take-home pay (£, after tax)<input id="takeHome" type="number" min="0" step="any" inputmode="decimal" placeholder="e.g. 45000"></label>
+      <label>Annual salary before tax (£)<input id="gross" type="number" min="0" step="any" inputmode="decimal" placeholder="e.g. 55000"></label>
       <label>Paid hours per week<input id="hours" type="number" min="1" max="100" step="any" inputmode="decimal" value="40"></label>
     </div>
 
@@ -55,14 +49,23 @@
         <label>Holiday weeks per year<input id="holiday" type="number" min="0" max="30" step="any" inputmode="decimal" value="5"></label>
       </div>
       <div class="row">
+        <label>Other deductions, % of salary (pension, student loan)<input id="otherPct" type="number" min="0" max="60" step="any" inputmode="decimal" value="0"></label>
         <label>Retirement age<input id="retire" type="number" min="40" max="90" inputmode="numeric" value="67"></label>
         <label>Expected age at death (leave blank to estimate)<input id="lifeExp" type="number" min="20" max="120" inputmode="numeric" placeholder="auto"></label>
       </div>
     </details>
   </form>
 
+  <button id="run" type="button" form="form">Calculate true cost</button>
+
+  <section class="card" id="result" aria-live="polite" hidden>
+    <div class="big" id="bigNumber"></div>
+    <div class="sub" id="bigSub"></div>
+    <dl id="details"></dl>
+  </section>
+
   <footer>
-    <p>Draft v0.1. Life expectancy is a rough estimate, not a prediction. Nothing you enter leaves your device.</p>
+    <p>Draft v0.2. Tax is a UK estimate (England, Wales, NI). Life expectancy is a rough estimate, not a prediction. Nothing you enter leaves your device.</p>
   </footer>
 </main>
 <script src="calc.js"></script>

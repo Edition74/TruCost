@@ -17,25 +17,31 @@ function fmtDuration(hours) {
 const gbp = (n) => '£' + n.toLocaleString('en-GB', { maximumFractionDigits: 0 });
 const pct = (x) => (x * 100 < 0.1 ? '<0.1%' : (x * 100).toFixed(x < 0.1 ? 2 : 1) + '%');
 
-function render() {
+function run() {
   const price = num('price');
   const age = num('age');
-  const takeHome = num('takeHome');
+  const gross = num('gross');
   const hours = num('hours');
-  const ready = price > 0 && age && takeHome > 0 && hours > 0;
+  const box = $('result'), big = $('bigNumber'), sub = $('bigSub'), dl = $('details');
+  box.hidden = false;
 
-  const big = $('bigNumber'), sub = $('bigSub'), dl = $('details');
-  if (!ready) {
-    big.textContent = 'Enter a price';
-    sub.textContent = 'Add the price, your age, take-home pay and weekly hours.';
+  const missing = [];
+  if (!(price > 0)) missing.push('price');
+  if (!age) missing.push('age');
+  if (!(gross > 0)) missing.push('salary');
+  if (!(hours > 0)) missing.push('weekly hours');
+  if (missing.length) {
+    big.textContent = 'Missing details';
+    sub.textContent = `Add your ${missing.join(', ')} and press the button again.`;
     dl.innerHTML = '';
     return;
   }
 
+  const pay = estimateTakeHome(gross, num('otherPct') ?? 0);
   const r = calculate({
     price,
     frequency: $('frequency').value,
-    takeHomeAnnual: takeHome,
+    takeHomeAnnual: pay.takeHome,
     hoursPerWeek: hours,
     commuteHoursPerWeek: num('commute') ?? 0,
     holidayWeeks: num('holiday') ?? 5,
@@ -54,12 +60,15 @@ function render() {
   const rows = [
     ['Share of your remaining working life', r.shareOfWorkingLife == null ? 'n/a (retired)' : pct(r.shareOfWorkingLife)],
     ['Share of your remaining waking life', r.shareOfAwakeLife == null ? 'n/a' : pct(r.shareOfAwakeLife)],
+    ['Estimated take-home pay', `${gbp(pay.takeHome)} a year`],
+    ['Tax and National Insurance', `${gbp(pay.incomeTax + pay.ni)} a year`],
     ['Your hourly rate on paper', `£${r.paidHourlyRate.toFixed(2)}`],
     ['Your real hourly rate (incl. commute)', `£${r.trueHourlyRate.toFixed(2)}`],
     ['Estimated years left', `${r.yearsLeft.toFixed(1)} (to age ${r.deathAge.toFixed(0)})`],
   ];
   dl.innerHTML = rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-document.querySelectorAll('input, select').forEach((el) => el.addEventListener('input', render));
-render();
+$('run').addEventListener('click', run);
+$('form').addEventListener('submit', (e) => { e.preventDefault(); run(); });

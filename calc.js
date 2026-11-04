@@ -15,6 +15,25 @@ function expectedAgeAtDeath(age, sex) {
   return base + 0.00156 * age * age;
 }
 
+
+// Rough UK (England, Wales, NI) employee tax estimate from gross salary.
+// Income tax: 12,570 personal allowance (tapered above 100k), 20% to 37,700 of
+// taxable income, 40% to 125,140, 45% above. Employee NI: 8% between 12,570 and
+// 50,270, 2% above. Ignores pension, student loan, Scottish rates and benefits.
+// Thresholds are frozen but should be reviewed each April.
+function estimateTakeHome(gross, extraDeductionPct = 0) {
+  const PA_BASE = 12570;
+  const pa = gross > 100000 ? Math.max(0, PA_BASE - (gross - 100000) / 2) : PA_BASE;
+  const taxable = Math.max(0, gross - pa);
+  const basic = Math.min(taxable, 37700) * 0.20;
+  const higher = Math.max(0, Math.min(taxable, 125140) - 37700) * 0.40;
+  const additional = Math.max(0, taxable - 125140) * 0.45;
+  const incomeTax = basic + higher + additional;
+  const ni = Math.max(0, Math.min(gross, 50270) - 12570) * 0.08 + Math.max(0, gross - 50270) * 0.02;
+  const other = gross * (extraDeductionPct / 100);
+  return { incomeTax, ni, other, takeHome: gross - incomeTax - ni - other };
+}
+
 const HOURS_AWAKE_PER_DAY = 16;
 const WEEKS_PER_YEAR = 52;
 
@@ -68,4 +87,4 @@ function calculate(input) {
   };
 }
 
-if (typeof module !== 'undefined') module.exports = { calculate, expectedAgeAtDeath };
+if (typeof module !== 'undefined') module.exports = { calculate, expectedAgeAtDeath, estimateTakeHome };
