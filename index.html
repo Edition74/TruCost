@@ -6,19 +6,23 @@
 <title>TruCost</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main>
   <header>
-    <h1>TruCost</h1>
-    <p class="tag">What does it really cost you? Not in money, in life.</p>
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 36 28" aria-hidden="true"><rect x="0" y="6" width="10" height="22" rx="5" fill="#8FD3F8"/><rect x="13" y="0" width="10" height="28" rx="5" fill="#FFCF1F"/><rect x="26" y="9" width="10" height="19" rx="5" fill="#E83FC6"/></svg>
+      <span class="wordmark">Tru<b>Cost</b></span>
+    </div>
+    <h1>What does it <mark>really</mark> cost you?</h1>
+    <p class="tag">Turn any price into hours of your life.</p>
   </header>
 
   <form id="form" autocomplete="off" novalidate>
     <section class="card">
-      <h2>What are you buying?</h2>
+      <h2 class="pill y">What are you buying?</h2>
       <div class="field" data-id="price" data-label="Price" data-prefix="£" data-min="1" data-max="100000" data-log data-value="1200"></div>
       <fieldset class="seg" aria-label="How often you pay">
         <label><input type="radio" name="frequency" value="once" checked><span>One-off</span></label>
@@ -28,7 +32,7 @@
     </section>
 
     <section class="card">
-      <h2>What do you earn before tax?</h2>
+      <h2 class="pill b">What do you earn before tax?</h2>
       <fieldset class="seg" aria-label="Pay period">
         <label><input type="radio" name="period" value="hourly"><span>Hourly</span></label>
         <label><input type="radio" name="period" value="daily"><span>Daily</span></label>
@@ -41,7 +45,7 @@
     </section>
 
     <section class="card">
-      <h2>About you</h2>
+      <h2 class="pill v">About you</h2>
       <div class="field" data-id="age" data-label="Your age" data-suffix="yrs" data-min="16" data-max="90" data-step="1" data-value="45"></div>
       <label class="plain">Sex, used for life expectancy
         <select id="sex">
@@ -53,7 +57,7 @@
     </section>
 
     <details class="card">
-      <summary>Fine-tune (optional)</summary>
+      <summary><span class="pill p">Fine-tune (optional)</span></summary>
       <div class="field" data-id="commute" data-label="Commute and work-related hours per week" data-suffix="hrs" data-min="0" data-max="25" data-step="0.5" data-value="5"></div>
       <div class="field" data-id="holiday" data-label="Holiday weeks per year" data-suffix="wks" data-min="0" data-max="12" data-step="0.5" data-value="5"></div>
       <div class="field" data-id="otherPct" data-label="Other deductions: pension, student loan" data-suffix="%" data-min="0" data-max="40" data-step="0.5" data-value="0"></div>
@@ -68,7 +72,12 @@
 
   <section id="result" aria-live="polite" hidden>
     <div class="hero">
-      <div class="hero-label">This costs you</div>
+      <div class="hero-top">
+        <div class="hero-label">This costs you</div>
+        <div class="deco" aria-hidden="true"><i></i><i></i><i></i>
+          <svg viewBox="0 0 40 40"><g stroke="#FFCF1F" stroke-width="5" stroke-linecap="round"><path d="M20 4v32M4 20h32M9 9l22 22M31 9L9 31"/></g></svg>
+        </div>
+      </div>
       <div class="big" id="bigNumber"></div>
       <div class="sub" id="bigSub"></div>
       <div id="tiles" class="tiles"></div>
@@ -78,7 +87,7 @@
   </section>
 
   <footer>
-    <p>Draft v0.3. Tax is a UK estimate (England, Wales, NI). Hourly and daily pay is counted for weeks worked only. Life expectancy is a rough estimate, not a prediction. Nothing you enter leaves your device.</p>
+    <p>Draft v0.4. Tax is a UK estimate (England, Wales, NI). Hourly and daily pay is counted for weeks worked only. Life expectancy is a rough estimate, not a prediction. Nothing you enter leaves your device.</p>
   </footer>
 </main>
 <script src="calc.js"></script>
