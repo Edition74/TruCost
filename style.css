@@ -233,3 +233,6 @@ form { display: contents; }
 /* Mascot pose change */
 @keyframes pop { 0% { transform: scale(.96); } 60% { transform: scale(1.025); } 100% { transform: scale(1); } }
 @media (prefers-reduced-motion: no-preference) { .poster img.pop { animation: pop .28s ease-out; } }
+
+/* Framed pose pictures share the idle pose's box so the page does not jump */
+.poster img[data-pose]:not([data-pose="idle"]) { aspect-ratio: 800 / 727; object-fit: cover; object-position: 50% 12%; border-radius: 22px; }
