@@ -23,6 +23,7 @@ function buildDial(el) {
   if (d.size) el.classList.add(d.size);
   el.innerHTML =
     `<div class="dial-body">` +
+      `<div class="bezel"></div><div class="face"></div>` +
       `<svg class="scale" viewBox="0 0 200 200" aria-hidden="true"></svg>` +
       `<div class="knob" tabindex="0" role="slider" aria-label="${d.label}"><i class="notch"></i></div>` +
       `<div class="lcd"><input id="${d.id}" type="number" inputmode="decimal" step="any"><small>${f.unit}</small></div>` +
@@ -38,7 +39,7 @@ function buildDial(el) {
   const ticks = [];
   for (let i = 0; i <= TICKS; i++) {
     const a = ((START + (SWEEP * i) / TICKS) * Math.PI) / 180;
-    const major = i % 10 === 0, r1 = major ? 79 : 85, r2 = 95;
+    const major = i % 10 === 0, r1 = major ? 76 : 80, r2 = 87;
     const ln = document.createElementNS(SVGNS, 'line');
     ln.setAttribute('x1', (100 + r1 * Math.sin(a)).toFixed(2));
     ln.setAttribute('y1', (100 - r1 * Math.cos(a)).toFixed(2));

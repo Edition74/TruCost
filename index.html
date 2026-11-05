@@ -6,7 +6,7 @@
 <title>TruCost</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Share+Tech+Mono&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka:wght@400;500;600;700&family=Share+Tech+Mono&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,12 +14,9 @@
 <div class="machine">
   <i class="screw tl"></i><i class="screw tr"></i><i class="screw bl"></i><i class="screw br"></i>
 
-  <header class="plate">
-    <div class="plate-top">
-      <div class="brand">
-        <h1>TruCost<span>Generator</span></h1>
-        <span class="model">Model TC-1</span>
-      </div>
+  <header class="top">
+    <div class="topbar">
+      <h1 class="logo"><span class="word"><b>Tru</b><b>Cost</b></span><em>Generator</em></h1>
       <div class="lamps" aria-hidden="true">
         <div><i class="lamp pwr on"></i><span>Pwr</span></div>
         <div><i class="lamp busy" id="lampBusy"></i><span>Busy</span></div>
@@ -27,30 +24,10 @@
         <div><i class="lamp mem" id="lampMem"></i><span>Mem</span></div>
       </div>
     </div>
-    <div class="mascot-row">
-      <div class="mascot" aria-hidden="true">
-        <svg viewBox="0 0 120 124" xmlns="http://www.w3.org/2000/svg">
-          <line x1="60" y1="20" x2="60" y2="9" stroke="#0b1318" stroke-width="4" stroke-linecap="round"/>
-          <circle class="beacon" cx="60" cy="7" r="6" fill="#ffb454" stroke="#0b1318" stroke-width="3"/>
-          <rect x="11" y="38" width="12" height="24" rx="5" fill="#f0623a" stroke="#0b1318" stroke-width="3.5"/>
-          <rect x="97" y="38" width="12" height="24" rx="5" fill="#f0623a" stroke="#0b1318" stroke-width="3.5"/>
-          <rect x="20" y="20" width="80" height="58" rx="15" fill="#f3ead3" stroke="#0b1318" stroke-width="4"/>
-          <circle cx="42" cy="44" r="13" fill="#fffaf0" stroke="#0b1318" stroke-width="3.5"/>
-          <circle cx="78" cy="44" r="13" fill="#fffaf0" stroke="#0b1318" stroke-width="3.5"/>
-          <path d="M42 44V35M42 44l6 4M78 44V35M78 44l-5 6" stroke="#0b1318" stroke-width="3" stroke-linecap="round" fill="none"/>
-          <circle cx="42" cy="44" r="2.2" fill="#f0623a"/><circle cx="78" cy="44" r="2.2" fill="#f0623a"/>
-          <rect x="38" y="62" width="44" height="11" rx="4" fill="#0b1318"/>
-          <path d="M46 64v7M54 64v7M62 64v7M70 64v7" stroke="#ffb454" stroke-width="3" stroke-linecap="round"/>
-          <rect x="50" y="78" width="20" height="9" fill="#55687a" stroke="#0b1318" stroke-width="3"/>
-          <rect x="28" y="86" width="64" height="34" rx="11" fill="#2c8179" stroke="#0b1318" stroke-width="4"/>
-          <circle cx="60" cy="102" r="12" fill="#081615" stroke="#0b1318" stroke-width="3"/>
-          <path d="M60 102L67 94" stroke="#f0623a" stroke-width="3" stroke-linecap="round"/>
-          <circle cx="60" cy="102" r="2.5" fill="#8ff5d4"/>
-          <circle cx="38" cy="96" r="3.5" fill="#ffb454"/><circle cx="82" cy="96" r="3.5" fill="#f0623a"/>
-        </svg>
-      </div>
-      <p class="bubble" id="says"><span>Priced in pounds.</span><em>Paid in hours.</em></p>
-    </div>
+    <figure class="poster">
+      <img src="mascot.webp" width="800" height="727" alt="The TruCost robot cat, wearing flying goggles, points at a green screen showing £25.00 equals 2.50 hours, above a control panel marked cost, hours and calculate.">
+    </figure>
+    <p class="sign" id="says"><span>Priced in pounds.</span><em>Paid in hours.</em></p>
   </header>
 
   <form id="form" autocomplete="off" novalidate>
@@ -70,7 +47,7 @@
     <section class="module">
       <h2><b>B</b>Earnings before tax</h2>
       <p class="engrave">Pay period</p>
-      <fieldset class="keys" aria-label="Pay period">
+      <fieldset class="keys five" aria-label="Pay period">
         <label><input type="radio" name="period" value="hourly"><span class="key"><i></i>Hour</span></label>
         <label><input type="radio" name="period" value="daily"><span class="key"><i></i>Day</span></label>
         <label><input type="radio" name="period" value="weekly"><span class="key"><i></i>Week</span></label>
@@ -141,7 +118,7 @@
     <label class="switch"><input type="checkbox" id="useCurrent" checked><span class="sw"></span><span>Use my current pay for this item</span></label>
     <div id="customPay" hidden>
       <p class="engrave">Pay at the time</p>
-      <fieldset class="keys" aria-label="Pay period at the time">
+      <fieldset class="keys five" aria-label="Pay period at the time">
         <label><input type="radio" name="cperiod" value="hourly"><span class="key"><i></i>Hour</span></label>
         <label><input type="radio" name="cperiod" value="daily"><span class="key"><i></i>Day</span></label>
         <label><input type="radio" name="cperiod" value="weekly"><span class="key"><i></i>Week</span></label>
@@ -175,7 +152,7 @@
   </section>
 
   <footer class="foot">
-    <p>Draft v0.7. Tax is a UK estimate (England, Wales, NI). Hourly and daily pay is counted for weeks worked only. Life expectancy is a rough estimate, not a prediction.</p>
+    <p>Draft v0.9. Tax is a UK estimate (England, Wales, NI). Hourly and daily pay is counted for weeks worked only. Life expectancy is a rough estimate, not a prediction.</p>
   </footer>
 </div>
 </main>
