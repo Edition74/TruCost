@@ -7,6 +7,7 @@ const setRadio = (name, value) => {
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const reduceMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 const lamp = (id, on) => $(id).classList.toggle('on', on);
+const says = (html) => { $('says').innerHTML = html; };
 
 // ---------- Dials: a rotary knob with a typeable LCD in the centre ----------
 const START = -135, SWEEP = 270, END = START + SWEEP, TICKS = 40;
@@ -291,6 +292,7 @@ function renderResult(p, price) {
     `<div class="out-big"><span class="n">${n}</span><span class="u">${u}</span></div>` +
     `<div class="out-sub">of your life. ${sub}</div>` +
     `<div class="reads">${reads}</div>${bar}<dl class="rows">${rows}</dl>`;
+  says(`<span>${n} ${u}.</span><em>Still want it?</em>`);
   $('scrState').textContent = 'Ready';
 }
 
@@ -308,6 +310,7 @@ function run() {
 
   if (missing.length || !p) {
     lamp('lampErr', true);
+    says('<span>Oi!</span><em>A dial is missing.</em>');
     $('scrState').textContent = 'Error';
     $('out').innerHTML =
       `<div class="ln err">&gt; ERROR: MISSING ${esc(missing.join(', ').toUpperCase())}</div>` +
@@ -324,6 +327,7 @@ function run() {
   };
   if (reduceMotion()) { finish(); return; }
   lamp('lampBusy', true);
+  says('<span>Crunching&hellip;</span><em>Hold tight.</em>');
   $('scrState').textContent = 'Computing';
   $('out').innerHTML = `<div class="ln">&gt; COMPUTING TRUE COST</div><div class="prog"><i></i></div>`;
   setTimeout(finish, 450);

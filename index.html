@@ -15,15 +15,41 @@
   <i class="screw tl"></i><i class="screw tr"></i><i class="screw bl"></i><i class="screw br"></i>
 
   <header class="plate">
-    <div class="brand">
-      <h1>TruCost<span>Generator</span></h1>
-      <p>Model TC-1 &middot; What does it really cost you?</p>
+    <div class="plate-top">
+      <div class="brand">
+        <h1>TruCost<span>Generator</span></h1>
+        <span class="model">Model TC-1</span>
+      </div>
+      <div class="lamps" aria-hidden="true">
+        <div><i class="lamp pwr on"></i><span>Pwr</span></div>
+        <div><i class="lamp busy" id="lampBusy"></i><span>Busy</span></div>
+        <div><i class="lamp err" id="lampErr"></i><span>Err</span></div>
+        <div><i class="lamp mem" id="lampMem"></i><span>Mem</span></div>
+      </div>
     </div>
-    <div class="lamps" aria-hidden="true">
-      <div><i class="lamp pwr on"></i><span>Pwr</span></div>
-      <div><i class="lamp busy" id="lampBusy"></i><span>Busy</span></div>
-      <div><i class="lamp err" id="lampErr"></i><span>Err</span></div>
-      <div><i class="lamp mem" id="lampMem"></i><span>Mem</span></div>
+    <div class="mascot-row">
+      <div class="mascot" aria-hidden="true">
+        <svg viewBox="0 0 120 124" xmlns="http://www.w3.org/2000/svg">
+          <line x1="60" y1="20" x2="60" y2="9" stroke="#0b1318" stroke-width="4" stroke-linecap="round"/>
+          <circle class="beacon" cx="60" cy="7" r="6" fill="#ffb454" stroke="#0b1318" stroke-width="3"/>
+          <rect x="11" y="38" width="12" height="24" rx="5" fill="#f0623a" stroke="#0b1318" stroke-width="3.5"/>
+          <rect x="97" y="38" width="12" height="24" rx="5" fill="#f0623a" stroke="#0b1318" stroke-width="3.5"/>
+          <rect x="20" y="20" width="80" height="58" rx="15" fill="#f3ead3" stroke="#0b1318" stroke-width="4"/>
+          <circle cx="42" cy="44" r="13" fill="#fffaf0" stroke="#0b1318" stroke-width="3.5"/>
+          <circle cx="78" cy="44" r="13" fill="#fffaf0" stroke="#0b1318" stroke-width="3.5"/>
+          <path d="M42 44V35M42 44l6 4M78 44V35M78 44l-5 6" stroke="#0b1318" stroke-width="3" stroke-linecap="round" fill="none"/>
+          <circle cx="42" cy="44" r="2.2" fill="#f0623a"/><circle cx="78" cy="44" r="2.2" fill="#f0623a"/>
+          <rect x="38" y="62" width="44" height="11" rx="4" fill="#0b1318"/>
+          <path d="M46 64v7M54 64v7M62 64v7M70 64v7" stroke="#ffb454" stroke-width="3" stroke-linecap="round"/>
+          <rect x="50" y="78" width="20" height="9" fill="#55687a" stroke="#0b1318" stroke-width="3"/>
+          <rect x="28" y="86" width="64" height="34" rx="11" fill="#2c8179" stroke="#0b1318" stroke-width="4"/>
+          <circle cx="60" cy="102" r="12" fill="#081615" stroke="#0b1318" stroke-width="3"/>
+          <path d="M60 102L67 94" stroke="#f0623a" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="60" cy="102" r="2.5" fill="#8ff5d4"/>
+          <circle cx="38" cy="96" r="3.5" fill="#ffb454"/><circle cx="82" cy="96" r="3.5" fill="#f0623a"/>
+        </svg>
+      </div>
+      <p class="bubble" id="says"><span>Priced in pounds.</span><em>Paid in hours.</em></p>
     </div>
   </header>
 
@@ -149,7 +175,7 @@
   </section>
 
   <footer class="foot">
-    <p>Draft v0.6. Tax is a UK estimate (England, Wales, NI). Hourly and daily pay is counted for weeks worked only. Life expectancy is a rough estimate, not a prediction.</p>
+    <p>Draft v0.7. Tax is a UK estimate (England, Wales, NI). Hourly and daily pay is counted for weeks worked only. Life expectancy is a rough estimate, not a prediction.</p>
   </footer>
 </div>
 </main>
