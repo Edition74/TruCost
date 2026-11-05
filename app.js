@@ -173,7 +173,8 @@ const custom = bindPeriod('cperiod', 'cEarn', 'cHours');
 
 // ---------- Formatting ----------
 function durationParts(hours) {
-  if (hours < 1) return { n: String(Math.max(1, Math.round(hours * 60))), u: 'minutes' };
+  if (hours <= 0) return { n: '0', u: 'minutes' };
+  if (hours < 1) { const m = Math.max(1, Math.round(hours * 60)); return { n: String(m), u: m === 1 ? 'minute' : 'minutes' }; }
   if (hours < 48) return { n: hours.toFixed(1), u: 'hours' };
   const days = hours / 8;
   if (days < 60) return { n: days.toFixed(1), u: 'working days' };
@@ -404,6 +405,32 @@ function save() {
 $('save').addEventListener('click', save);
 
 // ---------- Memory bank ----------
+const compareIds = new Set(); // this visit only, not saved
+
+function renderCompare(rows) {
+  const box = $('compare');
+  const picked = rows.filter((x) => compareIds.has(x.it.id)).sort((a, b) => a.r.hoursOfLife - b.r.hoursOfLife);
+  if (picked.length < 2) {
+    box.hidden = !compareIds.size;
+    box.innerHTML = compareIds.size
+      ? '<div class="scr-head"><span>Compare</span><span>1 chosen</span></div><div class="ln dim">&gt; CHOOSE ONE MORE ITEM TO COMPARE<span class="cur"></span></div>'
+      : '';
+    return;
+  }
+  const max = picked[picked.length - 1].r.hoursOfLife || 1;
+  const low = picked[0], high = picked[picked.length - 1];
+  const diff = durationParts(high.r.hoursOfLife - low.r.hoursOfLife);
+  box.hidden = false;
+  box.innerHTML =
+    `<div class="scr-head"><span>Compare</span><span>${picked.length} chosen</span></div>` +
+    picked.map(({ it, r }, i) =>
+      `<div class="cmp-row${i === 0 ? ' best' : ''}"><div class="cmp-top"><span class="cmp-name">${esc(it.name)}</span><b>${fmtDuration(r.hoursOfLife)}</b></div>` +
+      `<div class="cmp-bar"><i style="width:${Math.max(3, (r.hoursOfLife / max) * 100).toFixed(1)}%"></i></div>` +
+      `<div class="cmp-meta">${esc(priceText(it.price, it.frequency))}</div></div>`).join('') +
+    `<div class="cmp-sum">&gt; <b>${esc(low.it.name)}</b> costs ${diff.n} ${diff.u} less of your life than <b>${esc(high.it.name)}</b>.</div>` +
+    `<button type="button" class="linkbtn" data-act="cmpclear">Clear comparison</button>`;
+}
+
 function renderList() {
   const p = profile();
   $('clearBtn').hidden = !items.length;
@@ -438,6 +465,9 @@ function renderList() {
     `<div class="read"><b>${fmtDuration(sum(bought))}</b><span>Already bought (${bought.length})</span></div>` +
     `<div class="read"><b>${fmtDuration(sum(planned))}</b><span>Planned (${planned.length})</span></div></div>`;
 
+  for (const id of [...compareIds]) if (!items.some((x) => x.id === id)) compareIds.delete(id);
+  renderCompare(rows);
+
   const filter = radio('filter');
   const shown = rows.filter((x) => filter === 'all' || x.it.status === filter);
   $('list').innerHTML = shown.length ? shown.map(({ it, r, gross }) => {
@@ -448,17 +478,26 @@ function renderList() {
       `${esc(priceText(it.price, it.frequency))}${when}${payNote}</div></div>` +
       `<div class="item-cost">${fmtDuration(r.hoursOfLife)}</div>` +
       `<div class="item-actions">` +
+      `<button type="button" data-act="cmp" data-id="${it.id}" aria-pressed="${compareIds.has(it.id)}">${compareIds.has(it.id) ? 'Comparing' : 'Compare'}</button>` +
       `${it.status === 'planned' ? `<button type="button" data-act="bought" data-id="${it.id}">Mark as bought</button>` : ''}` +
       `<button type="button" data-act="remove" data-id="${it.id}">Remove</button></div></li>`;
   }).join('') : '<li class="empty">&gt; NOTHING IN THIS VIEW.</li>';
 }
 
+$('compare').addEventListener('click', (e) => {
+  if (e.target.closest('button[data-act=cmpclear]')) { compareIds.clear(); renderList(); }
+});
 $('list').addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-act]');
   if (!btn) return;
+  if (btn.dataset.act === 'cmp') {
+    if (compareIds.has(btn.dataset.id)) compareIds.delete(btn.dataset.id); else compareIds.add(btn.dataset.id);
+    renderList();
+    return;
+  }
   const i = items.findIndex((x) => x.id === btn.dataset.id);
   if (i < 0) return;
-  if (btn.dataset.act === 'remove') items.splice(i, 1);
+  if (btn.dataset.act === 'remove') { items.splice(i, 1); compareIds.delete(btn.dataset.id); }
   if (btn.dataset.act === 'bought') {
     items[i].status = 'bought';
     items[i].date = items[i].date || new Date().toISOString().slice(0, 10);

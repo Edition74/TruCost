@@ -236,3 +236,19 @@ form { display: contents; }
 
 /* Framed pose pictures share the idle pose's box so the page does not jump */
 .poster img[data-pose]:not([data-pose="idle"]) { aspect-ratio: 800 / 727; object-fit: cover; object-position: 50% 12%; border-radius: 22px; }
+
+/* Compare screen */
+.screen.cmp { min-height: 0; margin-bottom: 14px; }
+.screen.cmp[hidden] { display: none; }
+.cmp-row { margin: 12px 0 0; }
+.cmp-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.cmp-name { overflow-wrap: anywhere; color: var(--phos-big); }
+.cmp-top b { flex: none; font-weight: 400; color: var(--amber); }
+.cmp-bar { height: 12px; margin-top: 5px; border: 2px solid var(--ink); border-radius: 6px; background: rgba(0,0,0,.45); overflow: hidden; }
+.cmp-bar i { display: block; height: 100%; background: var(--amber); box-shadow: 0 0 7px rgba(255,184,31,.5); }
+.cmp-row.best .cmp-bar i { background: var(--phos); box-shadow: 0 0 7px rgba(125,255,154,.5); }
+.cmp-meta { margin-top: 3px; color: var(--phos-dim); font-size: 12px; }
+.cmp-sum { margin-top: 14px; color: var(--phos); }
+.cmp-sum b { font-weight: 400; color: var(--phos-big); }
+.screen.cmp .linkbtn { position: relative; z-index: 1; margin-top: 8px; color: var(--amber); }
+.item-actions button[aria-pressed="true"] { color: var(--phos); }
