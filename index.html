@@ -6,131 +6,152 @@
 <title>TruCost</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Share+Tech+Mono&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main>
-  <header>
+<div class="machine">
+  <i class="screw tl"></i><i class="screw tr"></i><i class="screw bl"></i><i class="screw br"></i>
+
+  <header class="plate">
     <div class="brand">
-      <svg class="mark" viewBox="0 0 36 28" aria-hidden="true"><rect x="0" y="6" width="10" height="22" rx="5" fill="#8FD3F8"/><rect x="13" y="0" width="10" height="28" rx="5" fill="#FFCF1F"/><rect x="26" y="9" width="10" height="19" rx="5" fill="#E83FC6"/></svg>
-      <span class="wordmark">Tru<b>Cost</b></span>
+      <h1>TruCost<span>Generator</span></h1>
+      <p>Model TC-1 &middot; What does it really cost you?</p>
     </div>
-    <h1>What does it <mark>really</mark> cost you?</h1>
-    <p class="tag">Turn any price into hours of your life.</p>
+    <div class="lamps" aria-hidden="true">
+      <div><i class="lamp pwr on"></i><span>Pwr</span></div>
+      <div><i class="lamp busy" id="lampBusy"></i><span>Busy</span></div>
+      <div><i class="lamp err" id="lampErr"></i><span>Err</span></div>
+      <div><i class="lamp mem" id="lampMem"></i><span>Mem</span></div>
+    </div>
   </header>
 
   <form id="form" autocomplete="off" novalidate>
-    <section class="card">
-      <h2 class="pill y">What are you buying?</h2>
-      <div class="field" data-id="price" data-label="Price" data-prefix="£" data-min="1" data-max="100000" data-log data-value="1200"></div>
-      <fieldset class="seg" aria-label="How often you pay">
-        <label><input type="radio" name="frequency" value="once" checked><span>One-off</span></label>
-        <label><input type="radio" name="frequency" value="monthly"><span>Every month</span></label>
-        <label><input type="radio" name="frequency" value="yearly"><span>Every year</span></label>
+    <section class="module">
+      <h2><b>A</b>Item</h2>
+      <div class="dials one">
+        <div data-id="price" data-label="Price" data-unit="£" data-min="1" data-max="100000" data-log data-value="1200" data-size="big"></div>
+      </div>
+      <p class="engrave">Payment</p>
+      <fieldset class="keys" aria-label="How often you pay">
+        <label><input type="radio" name="frequency" value="once" checked><span class="key"><i></i>One-off</span></label>
+        <label><input type="radio" name="frequency" value="monthly"><span class="key"><i></i>Monthly</span></label>
+        <label><input type="radio" name="frequency" value="yearly"><span class="key"><i></i>Yearly</span></label>
       </fieldset>
     </section>
 
-    <section class="card">
-      <h2 class="pill b">What do you earn before tax?</h2>
-      <fieldset class="seg" aria-label="Pay period">
-        <label><input type="radio" name="period" value="hourly"><span>Hourly</span></label>
-        <label><input type="radio" name="period" value="daily"><span>Daily</span></label>
-        <label><input type="radio" name="period" value="weekly"><span>Weekly</span></label>
-        <label><input type="radio" name="period" value="monthly"><span>Monthly</span></label>
-        <label><input type="radio" name="period" value="annual" checked><span>Yearly</span></label>
+    <section class="module">
+      <h2><b>B</b>Earnings before tax</h2>
+      <p class="engrave">Pay period</p>
+      <fieldset class="keys" aria-label="Pay period">
+        <label><input type="radio" name="period" value="hourly"><span class="key"><i></i>Hour</span></label>
+        <label><input type="radio" name="period" value="daily"><span class="key"><i></i>Day</span></label>
+        <label><input type="radio" name="period" value="weekly"><span class="key"><i></i>Week</span></label>
+        <label><input type="radio" name="period" value="monthly"><span class="key"><i></i>Month</span></label>
+        <label><input type="radio" name="period" value="annual" checked><span class="key"><i></i>Year</span></label>
       </fieldset>
-      <div class="field" data-id="earn" data-label="Pay per year" data-prefix="£" data-min="10000" data-max="300000" data-step="500" data-value="55000"></div>
-      <div class="field" data-id="hours" data-label="Paid hours per week" data-suffix="hrs" data-min="1" data-max="70" data-step="0.5" data-value="40"></div>
+      <div class="dials two">
+        <div data-id="earn" data-label="Pay per year" data-unit="£" data-min="10000" data-max="300000" data-step="500" data-value="55000"></div>
+        <div data-id="hours" data-label="Paid hours per week" data-unit="HRS" data-min="1" data-max="70" data-step="0.5" data-value="40"></div>
+      </div>
     </section>
 
-    <section class="card">
-      <h2 class="pill v">About you</h2>
-      <div class="field" data-id="age" data-label="Your age" data-suffix="yrs" data-min="16" data-max="90" data-step="1" data-value="45"></div>
-      <label class="plain">Sex, used for life expectancy
-        <select id="sex">
-          <option value="average">Prefer not to say</option>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-        </select>
-      </label>
+    <section class="module">
+      <h2><b>C</b>Operator</h2>
+      <div class="dials two">
+        <div data-id="age" data-label="Your age" data-unit="YRS" data-min="16" data-max="90" data-step="1" data-value="45"></div>
+        <div class="cell">
+          <p class="engrave">Life table</p>
+          <fieldset class="keys col" aria-label="Life expectancy table">
+            <label><input type="radio" name="sex" value="average" checked><span class="key"><i></i>Any</span></label>
+            <label><input type="radio" name="sex" value="male"><span class="key"><i></i>Male</span></label>
+            <label><input type="radio" name="sex" value="female"><span class="key"><i></i>Female</span></label>
+          </fieldset>
+        </div>
+      </div>
     </section>
 
-    <details class="card">
-      <summary><span class="pill p">Fine-tune (optional)</span></summary>
-      <div class="field" data-id="commute" data-label="Commute and work-related hours per week" data-suffix="hrs" data-min="0" data-max="25" data-step="0.5" data-value="5"></div>
-      <div class="field" data-id="holiday" data-label="Holiday weeks per year" data-suffix="wks" data-min="0" data-max="12" data-step="0.5" data-value="5"></div>
-      <div class="field" data-id="otherPct" data-label="Other deductions: pension, student loan" data-suffix="%" data-min="0" data-max="40" data-step="0.5" data-value="0"></div>
-      <div class="field" data-id="retire" data-label="Retirement age" data-suffix="yrs" data-min="50" data-max="80" data-step="1" data-value="67"></div>
-      <label class="plain">Expected age at death (leave blank to estimate)
+    <details class="module service">
+      <summary><span>Service panel</span><em>Fine-tuning</em></summary>
+      <div class="dials two">
+        <div data-id="commute" data-label="Commute hours per week" data-unit="HRS" data-min="0" data-max="25" data-step="0.5" data-value="5"></div>
+        <div data-id="holiday" data-label="Holiday weeks per year" data-unit="WKS" data-min="0" data-max="12" data-step="0.5" data-value="5"></div>
+        <div data-id="otherPct" data-label="Pension and other deductions" data-unit="%" data-min="0" data-max="40" data-step="0.5" data-value="0"></div>
+        <div data-id="retire" data-label="Retirement age" data-unit="YRS" data-min="50" data-max="80" data-step="1" data-value="67"></div>
+      </div>
+      <label class="lcd-field">Expected age at death (blank to estimate)
         <input id="lifeExp" type="number" min="20" max="120" inputmode="numeric" placeholder="Estimated for you">
       </label>
     </details>
 
-    <button id="run" type="button">Calculate true cost</button>
+    <div class="launch">
+      <button id="run" type="button">Generate true cost</button>
+    </div>
   </form>
 
-  <section id="result" aria-live="polite" hidden>
-    <div class="hero">
-      <div class="hero-top">
-        <div class="hero-label">This costs you</div>
-        <div class="deco" aria-hidden="true"><i></i><i></i><i></i>
-          <svg viewBox="0 0 40 40"><g stroke="#FFCF1F" stroke-width="5" stroke-linecap="round"><path d="M20 4v32M4 20h32M9 9l22 22M31 9L9 31"/></g></svg>
-        </div>
+  <section class="screen-wrap" id="screenWrap" aria-label="Output screen">
+    <div class="screen">
+      <div class="scr-head"><span>TruCost/Gen output</span><span id="scrState">Standby</span></div>
+      <div id="out" aria-live="polite">
+        <div class="ln">&gt; STANDBY</div>
+        <div class="ln dim">&gt; SET DIALS A, B AND C, THEN PRESS GENERATE<span class="cur"></span></div>
       </div>
-      <div class="big" id="bigNumber"></div>
-      <div class="sub" id="bigSub"></div>
-      <div id="tiles" class="tiles"></div>
-      <div id="lifebar"></div>
     </div>
-    <dl id="details" class="card"></dl>
-
-    <section class="card" id="saveCard">
-      <h2 class="pill v">Save to your list</h2>
-      <label class="plain">Name
-        <input id="itemName" type="text" maxlength="60" placeholder="e.g. New laptop">
-      </label>
-      <fieldset class="seg spaced" aria-label="Status">
-        <label><input type="radio" name="status" value="planned" checked><span>Planned</span></label>
-        <label><input type="radio" name="status" value="bought"><span>Already bought</span></label>
-      </fieldset>
-      <label class="plain" id="dateRow" hidden>Date bought (optional)
-        <input id="itemDate" type="date">
-      </label>
-      <label class="check"><input type="checkbox" id="useCurrent" checked><span>Use my current pay for this item</span></label>
-      <div id="customPay" hidden>
-        <fieldset class="seg" aria-label="Pay period at the time">
-          <label><input type="radio" name="cperiod" value="hourly"><span>Hourly</span></label>
-          <label><input type="radio" name="cperiod" value="daily"><span>Daily</span></label>
-          <label><input type="radio" name="cperiod" value="weekly"><span>Weekly</span></label>
-          <label><input type="radio" name="cperiod" value="monthly"><span>Monthly</span></label>
-          <label><input type="radio" name="cperiod" value="annual" checked><span>Yearly</span></label>
-        </fieldset>
-        <div class="field" data-id="cEarn" data-label="Pay per year" data-prefix="£" data-min="10000" data-max="300000" data-step="500" data-value="55000"></div>
-        <div class="field" data-id="cHours" data-label="Paid hours per week" data-suffix="hrs" data-min="1" data-max="70" data-step="0.5" data-value="40"></div>
-      </div>
-      <p class="lb-note muted" id="savePreview"></p>
-      <button id="save" type="button" class="btn2">Add to my list</button>
-      <p class="lb-note muted" id="saveMsg" aria-live="polite"></p>
-    </section>
   </section>
 
-  <section class="card" id="listSection">
-    <h2 class="pill p">Your list</h2>
-    <div id="totals"></div>
-    <fieldset class="seg spaced" id="filterSeg" aria-label="Filter list" hidden>
-      <label><input type="radio" name="filter" value="all" checked><span>All</span></label>
-      <label><input type="radio" name="filter" value="planned"><span>Planned</span></label>
-      <label><input type="radio" name="filter" value="bought"><span>Bought</span></label>
+  <section class="module" id="saveCard" hidden>
+    <h2>Store to memory</h2>
+    <label class="lcd-field">Name
+      <input id="itemName" type="text" maxlength="60" placeholder="e.g. New laptop">
+    </label>
+    <fieldset class="keys two" aria-label="Status">
+      <label><input type="radio" name="status" value="planned" checked><span class="key"><i></i>Planned</span></label>
+      <label><input type="radio" name="status" value="bought"><span class="key"><i></i>Already bought</span></label>
     </fieldset>
-    <ul id="list" class="items"></ul>
-    <button id="clearBtn" type="button" class="linkbtn" hidden>Clear list</button>
-    <p class="lb-note muted">Saved on this device only. Nothing is sent anywhere.</p>
+    <label class="lcd-field" id="dateRow" hidden>Date bought (optional)
+      <input id="itemDate" type="date">
+    </label>
+    <label class="switch"><input type="checkbox" id="useCurrent" checked><span class="sw"></span><span>Use my current pay for this item</span></label>
+    <div id="customPay" hidden>
+      <p class="engrave">Pay at the time</p>
+      <fieldset class="keys" aria-label="Pay period at the time">
+        <label><input type="radio" name="cperiod" value="hourly"><span class="key"><i></i>Hour</span></label>
+        <label><input type="radio" name="cperiod" value="daily"><span class="key"><i></i>Day</span></label>
+        <label><input type="radio" name="cperiod" value="weekly"><span class="key"><i></i>Week</span></label>
+        <label><input type="radio" name="cperiod" value="monthly"><span class="key"><i></i>Month</span></label>
+        <label><input type="radio" name="cperiod" value="annual" checked><span class="key"><i></i>Year</span></label>
+      </fieldset>
+      <div class="dials two">
+        <div data-id="cEarn" data-label="Pay per year" data-unit="£" data-min="10000" data-max="300000" data-step="500" data-value="55000"></div>
+        <div data-id="cHours" data-label="Paid hours per week" data-unit="HRS" data-min="1" data-max="70" data-step="0.5" data-value="40"></div>
+      </div>
+    </div>
+    <p class="readline" id="savePreview"></p>
+    <button id="save" type="button" class="key-btn">Store item</button>
+    <p class="readline" id="saveMsg" aria-live="polite"></p>
   </section>
 
-  <footer>
-    <p>Draft v0.5. Tax is a UK estimate (England, Wales, NI). Hourly and daily pay is counted for weeks worked only. Life expectancy is a rough estimate, not a prediction. Nothing you enter leaves your device.</p>
+  <section class="module" id="listSection">
+    <h2>Memory bank</h2>
+    <fieldset class="keys" id="filterSeg" aria-label="Filter list" hidden>
+      <label><input type="radio" name="filter" value="all" checked><span class="key"><i></i>All</span></label>
+      <label><input type="radio" name="filter" value="planned"><span class="key"><i></i>Planned</span></label>
+      <label><input type="radio" name="filter" value="bought"><span class="key"><i></i>Bought</span></label>
+    </fieldset>
+    <div class="screen mem">
+      <div class="scr-head"><span>Memory</span><span id="memCount">0 items</span></div>
+      <div id="totals"></div>
+      <ul id="list" class="items"></ul>
+    </div>
+    <button id="clearBtn" type="button" class="linkbtn" hidden>Clear list</button>
+    <p class="engrave note">Saved on this device only. Nothing is sent anywhere.</p>
+  </section>
+
+  <footer class="foot">
+    <p>Draft v0.6. Tax is a UK estimate (England, Wales, NI). Hourly and daily pay is counted for weeks worked only. Life expectancy is a rough estimate, not a prediction.</p>
   </footer>
+</div>
 </main>
 <script src="calc.js"></script>
 <script src="app.js"></script>

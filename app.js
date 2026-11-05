@@ -1,24 +1,54 @@
 const $ = (id) => document.getElementById(id);
 const radio = (name) => document.querySelector(`input[name=${name}]:checked`).value;
-const esc = (s) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const setRadio = (name, value) => {
+  const r = document.querySelector(`input[name=${name}][value=${value}]`);
+  if (r) r.checked = true;
+};
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const reduceMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+const lamp = (id, on) => $(id).classList.toggle('on', on);
 
-// ---------- Fields: number box plus slider, kept in sync ----------
+// ---------- Dials: a rotary knob with a typeable LCD in the centre ----------
+const START = -135, SWEEP = 270, END = START + SWEEP, TICKS = 40;
+const SVGNS = 'http://www.w3.org/2000/svg';
 const fields = {};
 const sig = (v, n) => Number(v.toPrecision(n));
+const compact = (n) => (n >= 1000 ? Number((n / 1000).toFixed(1)) + 'k' : String(n));
 
-function buildField(el) {
+function buildDial(el) {
   const d = el.dataset;
-  const f = { cfg: { min: +d.min, max: +d.max, step: +d.step || 1, log: 'log' in d } };
+  const f = { cfg: { min: +d.min, max: +d.max, step: +d.step || 1, log: 'log' in d }, unit: d.unit || '' };
+  el.classList.add('dial');
+  if (d.size) el.classList.add(d.size);
   el.innerHTML =
-    `<div class="field-top"><label for="${d.id}">${d.label}</label>` +
-    `<span class="num">${d.prefix ? `<i>${d.prefix}</i>` : ''}` +
-    `<input id="${d.id}" type="number" inputmode="decimal" step="any">` +
-    `${d.suffix ? `<i>${d.suffix}</i>` : ''}</span></div>` +
-    `<input class="range" id="${d.id}-range" type="range" min="0" max="1000" step="1" aria-label="${d.label}">`;
-  f.label = el.querySelector('label');
-  f.num = el.querySelector('input[type=number]');
-  f.range = el.querySelector('input[type=range]');
+    `<div class="dial-body">` +
+      `<svg class="scale" viewBox="0 0 200 200" aria-hidden="true"></svg>` +
+      `<div class="knob" tabindex="0" role="slider" aria-label="${d.label}"><i class="notch"></i></div>` +
+      `<div class="lcd"><input id="${d.id}" type="number" inputmode="decimal" step="any"><small>${f.unit}</small></div>` +
+      `<span class="lim lo"></span><span class="lim hi"></span>` +
+    `</div>` +
+    `<label class="cap" for="${d.id}">${d.label}</label>`;
+  const svg = el.querySelector('svg');
+  const lo = el.querySelector('.lo'), hi = el.querySelector('.hi');
+  f.knob = el.querySelector('.knob');
+  f.num = el.querySelector('input');
+  f.label = el.querySelector('.cap');
 
+  const ticks = [];
+  for (let i = 0; i <= TICKS; i++) {
+    const a = ((START + (SWEEP * i) / TICKS) * Math.PI) / 180;
+    const major = i % 10 === 0, r1 = major ? 79 : 85, r2 = 95;
+    const ln = document.createElementNS(SVGNS, 'line');
+    ln.setAttribute('x1', (100 + r1 * Math.sin(a)).toFixed(2));
+    ln.setAttribute('y1', (100 - r1 * Math.cos(a)).toFixed(2));
+    ln.setAttribute('x2', (100 + r2 * Math.sin(a)).toFixed(2));
+    ln.setAttribute('y2', (100 - r2 * Math.cos(a)).toFixed(2));
+    ln.setAttribute('class', major ? 't maj' : 't');
+    svg.appendChild(ln);
+    ticks.push(ln);
+  }
+
+  // value <-> position (0..1000). Price uses a log scale so small and large prices are both easy.
   f.toPos = (v) => {
     const { min, max, log } = f.cfg;
     const c = Math.min(max, Math.max(min, v));
@@ -33,20 +63,77 @@ function buildField(el) {
     const v = min + ((max - min) * p) / 1000;
     return Number((Math.round(v / step) * step).toFixed(2));
   };
-  f.paint = () => f.range.style.setProperty('--p', f.range.value / 10 + '%');
-  f.set = (v) => { f.num.value = v; f.range.value = f.toPos(v); f.paint(); };
   f.get = () => { const v = parseFloat(f.num.value); return Number.isFinite(v) ? v : null; };
+  f.pos = () => { const v = f.get(); return v == null ? 0 : f.toPos(v) / 1000; };
+  f.paint = () => {
+    const pos = f.pos();
+    f.knob.style.transform = `rotate(${START + SWEEP * pos}deg)`;
+    ticks.forEach((t, i) => t.classList.toggle('on', i / TICKS <= pos + 1e-9));
+    f.knob.setAttribute('aria-valuenow', f.num.value || f.cfg.min);
+  };
+  f.set = (v) => { f.num.value = v; f.paint(); };
+  f.emit = () => f.num.dispatchEvent(new Event('input', { bubbles: true }));
+  f.limits = () => {
+    const pre = f.unit === '£' ? '£' : '';
+    lo.textContent = pre + compact(f.cfg.min);
+    hi.textContent = pre + compact(f.cfg.max);
+    f.knob.setAttribute('aria-valuemin', f.cfg.min);
+    f.knob.setAttribute('aria-valuemax', f.cfg.max);
+  };
+  f.setLabel = (t) => { f.label.textContent = t; f.knob.setAttribute('aria-label', t); };
 
-  f.range.addEventListener('input', () => { f.num.value = f.fromPos(+f.range.value); f.paint(); });
-  f.num.addEventListener('input', () => {
-    const v = parseFloat(f.num.value);
-    if (Number.isFinite(v)) f.range.value = f.toPos(v);
-    f.paint();
+  // Turning: relative circular drag, stops at the ends of the sweep.
+  let drag = null;
+  f.knob.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    const r = f.knob.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    drag = { cx, cy, last: Math.atan2(e.clientY - cy, e.clientX - cx), angle: START + SWEEP * f.pos() };
+    try { if (f.knob.setPointerCapture && e.pointerId != null) f.knob.setPointerCapture(e.pointerId); } catch { /* capture is optional */ }
+    f.knob.classList.add('grab');
   });
+  f.knob.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const a = Math.atan2(e.clientY - drag.cy, e.clientX - drag.cx);
+    let delta = a - drag.last;
+    if (delta > Math.PI) delta -= 2 * Math.PI;
+    if (delta < -Math.PI) delta += 2 * Math.PI;
+    drag.last = a;
+    drag.angle = Math.min(END, Math.max(START, drag.angle + (delta * 180) / Math.PI));
+    const v = f.fromPos(((drag.angle - START) / SWEEP) * 1000);
+    if (String(v) !== f.num.value) { f.set(v); f.emit(); }
+  });
+  const stop = () => { drag = null; f.knob.classList.remove('grab'); };
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((t) => f.knob.addEventListener(t, stop));
+
+  // Keyboard on the knob
+  f.knob.addEventListener('keydown', (e) => {
+    const { min, max, step, log } = f.cfg;
+    const cur = f.get() ?? min;
+    const big = e.shiftKey || e.key === 'PageUp' || e.key === 'PageDown';
+    let v = null;
+    if (['ArrowUp', 'ArrowRight', 'PageUp'].includes(e.key)) {
+      v = log ? f.fromPos(Math.min(1000, f.toPos(cur) + (big ? 80 : 8))) : cur + step * (big ? 10 : 1);
+    } else if (['ArrowDown', 'ArrowLeft', 'PageDown'].includes(e.key)) {
+      v = log ? f.fromPos(Math.max(0, f.toPos(cur) - (big ? 80 : 8))) : cur - step * (big ? 10 : 1);
+    } else if (e.key === 'Home') v = min;
+    else if (e.key === 'End') v = max;
+    if (v == null) return;
+    e.preventDefault();
+    f.set(Number(Math.min(max, Math.max(min, v)).toFixed(2)));
+    f.emit();
+  });
+
+  // Typing into the LCD
+  f.num.addEventListener('input', f.paint);
+  f.num.addEventListener('focus', () => f.num.select());
+  f.num.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); f.num.blur(); } });
+
+  f.limits();
   f.set(+d.value);
   fields[d.id] = f;
 }
-document.querySelectorAll('.field').forEach(buildField);
+document.querySelectorAll('[data-id]').forEach(buildDial);
 
 // ---------- Pay period: converts the current figure when the period changes ----------
 const PERIODS = {
@@ -56,14 +143,16 @@ const PERIODS = {
   monthly: { label: 'Pay per month', min: 800,   max: 25000,  step: 50 },
   annual:  { label: 'Pay per year',  min: 10000, max: 300000, step: 500 },
 };
+const PER = { hourly: 'an hour', daily: 'a day', weekly: 'a week', monthly: 'a month', annual: 'a year' };
 
 function bindPeriod(radioName, earnId, hoursId) {
   const b = { period: 'annual', earn: fields[earnId], hours: fields[hoursId] };
   b.apply = (period, amount) => {
     const p = PERIODS[period];
     Object.assign(b.earn.cfg, { min: p.min, max: p.max, step: p.step });
-    b.earn.label.textContent = p.label;
-    document.querySelector(`input[name=${radioName}][value=${period}]`).checked = true;
+    b.earn.setLabel(p.label);
+    b.earn.limits();
+    setRadio(radioName, period);
     b.earn.set(amount);
     b.period = period;
   };
@@ -81,15 +170,16 @@ const main = bindPeriod('period', 'earn', 'hours');
 const custom = bindPeriod('cperiod', 'cEarn', 'cHours');
 
 // ---------- Formatting ----------
-function fmtDuration(hours) {
-  if (hours < 1) return `${Math.max(1, Math.round(hours * 60))} minutes`;
-  if (hours < 48) return `${hours.toFixed(1)} hours`;
+function durationParts(hours) {
+  if (hours < 1) return { n: String(Math.max(1, Math.round(hours * 60))), u: 'minutes' };
+  if (hours < 48) return { n: hours.toFixed(1), u: 'hours' };
   const days = hours / 8;
-  if (days < 60) return `${days.toFixed(1)} working days`;
+  if (days < 60) return { n: days.toFixed(1), u: 'working days' };
   const years = hours / (8 * 5 * 52);
-  if (years < 1) return `${(days / 21.7).toFixed(1)} working months`;
-  return `${years.toFixed(1)} working years`;
+  if (years < 1) return { n: (days / 21.7).toFixed(1), u: 'working months' };
+  return { n: years.toFixed(1), u: 'working years' };
 }
+const fmtDuration = (h) => { const { n, u } = durationParts(h); return `${n} ${u}`; };
 const gbp = (n) => '£' + n.toLocaleString('en-GB', { maximumFractionDigits: 0 });
 const pct = (x) => (x * 100 < 0.1 ? '<0.1%' : (x * 100).toFixed(x < 0.1 ? 2 : 1) + '%');
 const priceText = (price, freq) => gbp(price) + (freq === 'monthly' ? ' a month' : freq === 'yearly' ? ' a year' : '');
@@ -108,7 +198,7 @@ function writeStore(key, value) {
 }
 function saveProfile() {
   writeStore(PROFILE_KEY, {
-    period: main.period, earn: fields.earn.get(), sex: $('sex').value, lifeExp: $('lifeExp').value,
+    period: main.period, earn: fields.earn.get(), sex: radio('sex'), lifeExp: $('lifeExp').value,
     ...Object.fromEntries(PROFILE_FIELDS.map((k) => [k, fields[k].get()])),
   });
 }
@@ -117,7 +207,7 @@ function loadProfile() {
   if (!d) return;
   PROFILE_FIELDS.forEach((k) => { if (d[k] != null) fields[k].set(d[k]); });
   if (PERIODS[d.period] && d.earn != null) main.apply(d.period, d.earn);
-  if (d.sex) $('sex').value = d.sex;
+  if (d.sex) setRadio('sex', d.sex);
   if (d.lifeExp) $('lifeExp').value = d.lifeExp;
 }
 
@@ -130,7 +220,7 @@ function profile() {
     age, hours, earn, period: main.period,
     holiday: fields.holiday.get() ?? 5, commute: fields.commute.get() ?? 0,
     otherPct: fields.otherPct.get() ?? 0, retire: fields.retire.get() ?? 67,
-    sex: $('sex').value, lifeExp: Number.isFinite(lifeExp) ? lifeExp : null,
+    sex: radio('sex'), lifeExp: Number.isFinite(lifeExp) ? lifeExp : null,
   };
 }
 
@@ -151,63 +241,95 @@ function computeItem(spec, p) {
   return { r, tax, gross };
 }
 
-// ---------- Result ----------
-function run() {
-  const price = fields.price.get(), box = $('result');
-  box.hidden = false;
-  const p = profile();
+// ---------- Output screen ----------
+const SEGS = 40;
+let runToken = 0;
 
+function reveal() {
+  $('screenWrap').scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' });
+}
+
+function renderResult(p, price) {
+  const frequency = radio('frequency');
+  const { r, tax } = computeItem({ price, frequency }, p);
+  const { n, u } = durationParts(r.hoursOfLife);
+  const sub = frequency !== 'once'
+    ? `${priceText(price, frequency)} for ${r.horizonYears.toFixed(0)} years is ${gbp(r.totalCost)} in total.`
+    : `The time it takes to earn ${gbp(r.totalCost)} after tax.`;
+  const days = r.workingDays < 10 ? r.workingDays.toFixed(1) : Math.round(r.workingDays).toLocaleString('en-GB');
+  const reads = [
+    [days, 'Working days'],
+    [r.shareOfWorkingLife == null ? 'n/a' : pct(r.shareOfWorkingLife), 'Of working life left'],
+    [r.shareOfAwakeLife == null ? 'n/a' : pct(r.shareOfAwakeLife), 'Of waking life left'],
+  ].map(([v, l]) => `<div class="read"><b>${v}</b><span>${l}</span></div>`).join('');
+
+  let bar;
+  if (r.workingYearsLeft > 0) {
+    const lit = Math.min(SEGS, Math.max(1, Math.ceil(r.shareOfWorkingLife * SEGS)));
+    const retireAt = Math.round(p.age + r.workingYearsLeft);
+    bar = `<div class="bar-title">Your remaining working life</div>` +
+      `<div class="segbar" role="img" aria-label="This purchase uses ${pct(r.shareOfWorkingLife)} of your remaining working life">` +
+      Array.from({ length: SEGS }, (_, i) => `<i class="${i < lit ? 'on' : ''}"></i>`).join('') + `</div>` +
+      `<div class="bar-ticks"><span>Now, ${p.age}</span><span>Retire, ${retireAt}</span></div>` +
+      `<p class="bar-note">Each block is ${100 / SEGS}% of the working life you have left. Lit blocks are this purchase.</p>`;
+  } else {
+    bar = `<p class="bar-note">You are past retirement age, so only your waking life is compared.</p>`;
+  }
+
+  const rows = [
+    ['Take-home pay', `${gbp(tax.takeHome)} a year`],
+    ['Tax and NI', `${gbp(tax.incomeTax + tax.ni)} a year`],
+    ['Hourly rate on paper', `£${r.paidHourlyRate.toFixed(2)}`],
+    ['Real hourly rate', `£${r.trueHourlyRate.toFixed(2)}`],
+    ['Years left', `${r.yearsLeft.toFixed(1)}, to age ${r.deathAge.toFixed(0)}`],
+  ].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+
+  $('out').innerHTML =
+    `<div class="ln dim">&gt; ITEM ${esc(priceText(price, frequency))}</div>` +
+    `<div class="ln dim">&gt; PAY ${gbp(p.earn)} ${PER[p.period]} BEFORE TAX</div>` +
+    `<div class="out-label">This costs you</div>` +
+    `<div class="out-big"><span class="n">${n}</span><span class="u">${u}</span></div>` +
+    `<div class="out-sub">of your life. ${sub}</div>` +
+    `<div class="reads">${reads}</div>${bar}<dl class="rows">${rows}</dl>`;
+  $('scrState').textContent = 'Ready';
+}
+
+function run() {
+  const token = ++runToken;
+  const price = fields.price.get(), p = profile();
   const missing = [];
   if (!(price > 0)) missing.push('price');
   if (!fields.age.get()) missing.push('age');
   if (!(fields.earn.get() > 0)) missing.push('pay');
   if (!(fields.hours.get() > 0)) missing.push('weekly hours');
+  lamp('lampErr', false);
+  lamp('lampBusy', false);
+  reveal();
+
   if (missing.length || !p) {
-    $('bigNumber').textContent = 'Missing details';
-    $('bigSub').textContent = `Add your ${missing.join(', ')} and press the button again.`;
-    $('tiles').innerHTML = $('lifebar').innerHTML = $('details').innerHTML = '';
+    lamp('lampErr', true);
+    $('scrState').textContent = 'Error';
+    $('out').innerHTML =
+      `<div class="ln err">&gt; ERROR: MISSING ${esc(missing.join(', ').toUpperCase())}</div>` +
+      `<div class="ln dim">&gt; SET THE DIALS AND PRESS GENERATE AGAIN<span class="cur"></span></div>`;
     $('saveCard').hidden = true;
     return;
   }
-  $('saveCard').hidden = false;
-
-  const frequency = radio('frequency');
-  const { r, tax } = computeItem({ price, frequency }, p);
-
-  $('bigNumber').textContent = fmtDuration(r.hoursOfLife) + ' of your life';
-  $('bigSub').textContent = frequency !== 'once'
-    ? `${priceText(price, frequency)} for ${r.horizonYears.toFixed(0)} years is ${gbp(r.totalCost)} in total`
-    : `The time it takes to earn ${gbp(r.totalCost)} after tax`;
-
-  $('tiles').innerHTML = [
-    [(r.workingDays < 10 ? r.workingDays.toFixed(1) : Math.round(r.workingDays).toLocaleString('en-GB')), 'working days'],
-    [r.shareOfWorkingLife == null ? 'n/a' : pct(r.shareOfWorkingLife), 'of your working life left'],
-    [r.shareOfAwakeLife == null ? 'n/a' : pct(r.shareOfAwakeLife), 'of your waking life left'],
-  ].map(([v, l]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('');
-
-  // Life bar: remaining years split into working and retired; accent slice is this purchase.
-  const workPct = (r.workingYearsLeft / (r.yearsLeft || 1)) * 100;
-  const slice = r.shareOfWorkingLife == null ? 0 : Math.min(100, Math.max(1.5, r.shareOfWorkingLife * 100));
-  const retireAt = Math.round(p.age + r.workingYearsLeft);
-  $('lifebar').innerHTML = workPct > 0
-    ? `<div class="lifebar"><div class="lb-work" style="width:${workPct}%"><div class="lb-cost" style="width:${slice}%"></div></div></div>` +
-      `<div class="lb-ticks"><span>Now, ${p.age}</span><span>Retire, ${retireAt}</span><span>About ${Math.round(r.deathAge)}</span></div>` +
-      `<p class="lb-note">The bright slice is this purchase, out of the working years you have left.</p>`
-    : `<p class="lb-note">You are past retirement age, so only your waking life is compared.</p>`;
-
-  $('details').innerHTML = [
-    ['Estimated take-home pay', `${gbp(tax.takeHome)} a year`],
-    ['Tax and National Insurance', `${gbp(tax.incomeTax + tax.ni)} a year`],
-    ['Your hourly rate on paper', `£${r.paidHourlyRate.toFixed(2)}`],
-    ['Your real hourly rate, with commute', `£${r.trueHourlyRate.toFixed(2)}`],
-    ['Estimated years left', `${r.yearsLeft.toFixed(1)}, to age ${r.deathAge.toFixed(0)}`],
-  ].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
-
-  updatePreview();
-  box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const finish = () => {
+    if (token !== runToken) return;
+    lamp('lampBusy', false);
+    renderResult(p, price);
+    $('saveCard').hidden = false;
+    updatePreview();
+  };
+  if (reduceMotion()) { finish(); return; }
+  lamp('lampBusy', true);
+  $('scrState').textContent = 'Computing';
+  $('out').innerHTML = `<div class="ln">&gt; COMPUTING TRUE COST</div><div class="prog"><i></i></div>`;
+  setTimeout(finish, 450);
 }
 
-// ---------- Save card ----------
+// ---------- Save panel ----------
 function payOverride() {
   if ($('useCurrent').checked) return null;
   return { period: custom.period, amount: custom.earn.get(), hours: custom.hours.get() };
@@ -219,7 +341,7 @@ function updatePreview() {
   const el = $('savePreview');
   if (!p || !(price > 0) || !overrideValid(o)) { el.textContent = ''; return; }
   const { r } = computeItem({ price, frequency: radio('frequency'), pay: o }, p);
-  el.textContent = `${o ? 'At that pay' : 'At your current pay'} this costs ${fmtDuration(r.hoursOfLife)} of your life.`;
+  el.textContent = `> ${o ? 'AT THAT PAY' : 'AT YOUR CURRENT PAY'} THIS COSTS ${fmtDuration(r.hoursOfLife).toUpperCase()} OF YOUR LIFE`;
 }
 
 let customSynced = false;
@@ -242,10 +364,10 @@ $('saveCard').addEventListener('change', updatePreview);
 function save() {
   const msg = $('saveMsg'), p = profile(), price = fields.price.get(), name = $('itemName').value.trim();
   const o = payOverride();
-  if (!p) { msg.textContent = 'Add your age, pay and weekly hours first.'; return; }
-  if (!(price > 0)) { msg.textContent = 'Add a price first.'; return; }
-  if (!name) { msg.textContent = 'Give it a name so you can find it later.'; $('itemName').focus(); return; }
-  if (!overrideValid(o)) { msg.textContent = 'Add the pay and weekly hours you had at the time.'; return; }
+  if (!p) { msg.textContent = '> ERROR: ADD AGE, PAY AND WEEKLY HOURS FIRST'; return; }
+  if (!(price > 0)) { msg.textContent = '> ERROR: ADD A PRICE FIRST'; return; }
+  if (!name) { msg.textContent = '> ERROR: GIVE IT A NAME SO YOU CAN FIND IT LATER'; $('itemName').focus(); return; }
+  if (!overrideValid(o)) { msg.textContent = '> ERROR: ADD THE PAY AND HOURS YOU HAD AT THE TIME'; return; }
   items.unshift({
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     name, price, frequency: radio('frequency'), status: radio('status'),
@@ -254,24 +376,26 @@ function save() {
   });
   writeStore(ITEMS_KEY, items);
   $('itemName').value = '';
-  msg.textContent = 'Added to your list.';
+  msg.textContent = '> STORED TO MEMORY';
   renderList();
 }
 $('save').addEventListener('click', save);
 
-// ---------- List ----------
+// ---------- Memory bank ----------
 function renderList() {
   const p = profile();
   $('clearBtn').hidden = !items.length;
   $('filterSeg').hidden = !items.length;
+  lamp('lampMem', items.length > 0);
+  $('memCount').textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
   if (!items.length) {
     $('totals').innerHTML = '';
-    $('list').innerHTML = '<li class="empty">Nothing saved yet. Calculate a price, then add it here to keep a running total of your time.</li>';
+    $('list').innerHTML = '<li class="empty">&gt; MEMORY EMPTY. GENERATE A COST, THEN STORE IT HERE TO KEEP A RUNNING TOTAL OF YOUR TIME.</li>';
     return;
   }
   if (!p) {
     $('totals').innerHTML = '';
-    $('list').innerHTML = '<li class="empty">Fill in your age, pay and weekly hours above to see what your saved items cost.</li>';
+    $('list').innerHTML = '<li class="empty">&gt; SET YOUR AGE, PAY AND WEEKLY HOURS ABOVE TO SEE WHAT YOUR STORED ITEMS COST.</li>';
     return;
   }
   const rows = items.map((it) => ({ it, ...computeItem(it, p) }));
@@ -281,16 +405,16 @@ function renderList() {
   const total = sum(rows);
   const probe = computeItem({ price: 1, frequency: 'once' }, p).r;
   const workingHoursLeft = (p.hours + p.commute) * (52 - p.holiday) * probe.workingYearsLeft;
-  const share = workingHoursLeft > 0 ? ` · ${pct(total / workingHoursLeft)} of your working life left` : '';
+  const share = workingHoursLeft > 0 ? `, ${pct(total / workingHoursLeft)} of your working life left` : '';
+  const t = durationParts(total);
 
   $('totals').innerHTML =
-    `<div class="hero totals"><div class="hero-label">Your list in total</div>` +
-    `<div class="big">${fmtDuration(total)}</div>` +
-    `<div class="sub">${rows.length} item${rows.length === 1 ? '' : 's'}${share}</div>` +
-    `<div class="tiles two">` +
-    `<div class="tile"><b>${fmtDuration(sum(bought))}</b><span>Already bought (${bought.length})</span></div>` +
-    `<div class="tile"><b>${fmtDuration(sum(planned))}</b><span>Planned (${planned.length})</span></div>` +
-    `</div></div>`;
+    `<div class="out-label" style="margin-top:0">List total</div>` +
+    `<div class="out-big sm"><span class="n">${t.n}</span><span class="u">${t.u}</span></div>` +
+    `<div class="out-sub">${rows.length} item${rows.length === 1 ? '' : 's'}${share}</div>` +
+    `<div class="reads two">` +
+    `<div class="read"><b>${fmtDuration(sum(bought))}</b><span>Already bought (${bought.length})</span></div>` +
+    `<div class="read"><b>${fmtDuration(sum(planned))}</b><span>Planned (${planned.length})</span></div></div>`;
 
   const filter = radio('filter');
   const shown = rows.filter((x) => filter === 'all' || x.it.status === filter);
@@ -299,12 +423,12 @@ function renderList() {
     const payNote = it.pay ? ` · on ${gbp(gross)} a year pay` : '';
     return `<li class="item"><div><div class="item-name">${esc(it.name)}</div>` +
       `<div class="item-meta"><span class="st ${it.status}">${it.status === 'bought' ? 'Bought' : 'Planned'}</span>` +
-      `${priceText(it.price, it.frequency)}${when}${payNote}</div></div>` +
+      `${esc(priceText(it.price, it.frequency))}${when}${payNote}</div></div>` +
       `<div class="item-cost">${fmtDuration(r.hoursOfLife)}</div>` +
       `<div class="item-actions">` +
       `${it.status === 'planned' ? `<button type="button" data-act="bought" data-id="${it.id}">Mark as bought</button>` : ''}` +
       `<button type="button" data-act="remove" data-id="${it.id}">Remove</button></div></li>`;
-  }).join('') : '<li class="empty">No items in this view.</li>';
+  }).join('') : '<li class="empty">&gt; NOTHING IN THIS VIEW.</li>';
 }
 
 $('list').addEventListener('click', (e) => {
@@ -344,5 +468,4 @@ $('form').addEventListener('submit', (e) => { e.preventDefault(); run(); });
 
 loadProfile();
 items = readStore(ITEMS_KEY, []);
-$('saveCard').hidden = true;
 renderList();
