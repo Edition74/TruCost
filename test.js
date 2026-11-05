@@ -2,8 +2,10 @@ const assert = require('assert');
 const { calculate, expectedAgeAtDeath, estimateTakeHome, annualise, fromAnnual } = require('./calc');
 
 // Survivor adjustment is in the expected range
-assert(Math.abs(expectedAgeAtDeath(40, 'male') - 81.5) < 0.5);
-assert(Math.abs(expectedAgeAtDeath(65, 'male') - 85.6) < 0.5);
+assert(Math.abs(expectedAgeAtDeath(40, 'male') - 80.21) < 0.01);   // ONS 2021-23: 40 + 40.21
+assert(Math.abs(expectedAgeAtDeath(65, 'female') - 85.96) < 0.01); // 65 + 20.96
+assert(Math.abs(expectedAgeAtDeath(45, 'average') - (45 + (35.65 + 38.94) / 2)) < 0.01); // midway between sexes
+assert(expectedAgeAtDeath(95, 'male') > 95);
 
 // 40h/wk, 47 working weeks, £47,000 take-home, no commute => £25/hr
 const base = { price: 1000, takeHomeAnnual: 47000, hoursPerWeek: 40, commuteHoursPerWeek: 0,
@@ -20,6 +22,12 @@ assert(r.trueHourlyRate < r.paidHourlyRate && r.hoursOfLife > 40);
 const once = calculate(base).totalCost;
 const monthly = calculate({ ...base, price: 50, frequency: 'monthly' });
 assert(monthly.totalCost > once * 0.5 && monthly.horizonYears > 30);
+
+// Years of use spreads a one-off cost per year; recurring costs ignore it
+r = calculate({ ...base, yearsOfUse: 4 });
+assert(Math.abs(r.hoursPerYearOfUse - r.hoursOfLife / 4) < 1e-9);
+assert.strictEqual(calculate({ ...base, price: 50, frequency: 'monthly', yearsOfUse: 4 }).hoursPerYearOfUse, null);
+assert.strictEqual(calculate(base).hoursPerYearOfUse, null);
 
 // Retired: no working life left, share is null, no NaN
 r = calculate({ ...base, age: 70 });

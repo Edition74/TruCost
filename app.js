@@ -240,6 +240,7 @@ function computeItem(spec, p) {
     takeHomeAnnual: tax.takeHome, hoursPerWeek: hours,
     commuteHoursPerWeek: p.commute, holidayWeeks: p.holiday,
     age: p.age, sex: p.sex, retirementAge: p.retire, lifeExpectancyOverride: p.lifeExp,
+    yearsOfUse: spec.years || null,
   });
   return { r, tax, gross };
 }
@@ -266,10 +267,26 @@ function pose(name) {
 }
 const poseFor = (hours) => (hours >= 160 ? 'shock' : hours < 8 ? 'cheer' : 'idle');
 
+let lastResult = null;
+
+// One line of context under the headline figure.
+function nudge(r, p) {
+  const share = r.shareOfWorkingLife ?? r.shareOfAwakeLife;
+  const weeks = r.hoursOfLife / (p.hours + p.commute);
+  const weekTxt = weeks >= 1 ? `About ${weeks < 10 ? weeks.toFixed(1) : Math.round(weeks)} week${(weeks < 10 ? weeks.toFixed(1) : String(Math.round(weeks))) === '1.0' ? '' : 's'} of work at your normal hours. ` : '';
+  const tone = share == null ? '' : share < 0.001 ? 'A blip on the life you have left.'
+    : share < 0.01 ? 'Small, but it adds up if it repeats.'
+    : share < 0.03 ? 'Real time. Be sure it earns its place.'
+    : 'A big slice of the working life you have left.';
+  return (weekTxt + tone).toUpperCase();
+}
+
 function renderResult(p, price) {
   const frequency = radio('frequency');
-  const { r, tax } = computeItem({ price, frequency }, p);
+  const years = frequency === 'once' && fields.years.get() > 0 ? fields.years.get() : null;
+  const { r, tax } = computeItem({ price, frequency, years }, p);
   const { n, u } = durationParts(r.hoursOfLife);
+  lastResult = { priceTxt: priceText(price, frequency), n, u };
   const sub = frequency !== 'once'
     ? `${priceText(price, frequency)} for ${r.horizonYears.toFixed(0)} years is ${gbp(r.totalCost)} in total.`
     : `The time it takes to earn ${gbp(r.totalCost)} after tax.`;
@@ -307,7 +324,10 @@ function renderResult(p, price) {
     `<div class="out-label">This costs you</div>` +
     `<div class="out-big"><span class="n">${n}</span><span class="u">${u}</span></div>` +
     `<div class="out-sub">of your life. ${sub}</div>` +
-    `<div class="reads">${reads}</div>${bar}<dl class="rows">${rows}</dl>`;
+    (r.hoursPerYearOfUse != null ? `<div class="out-year">&gt; Over ${years} year${years === 1 ? '' : 's'} of use: <b>${fmtDuration(r.hoursPerYearOfUse)}</b> of your life per year.</div>` : '') +
+    `<div class="out-nudge">&gt; ${nudge(r, p)}</div>` +
+    `<div class="reads">${reads}</div>${bar}<dl class="rows">${rows}</dl>` +
+    `<button type="button" class="key-btn alt" data-act="share">Make share card</button>`;
   says(`<span>${priceText(price, frequency)} on the tag.</span><em>${n} ${u} of your life.</em>`);
   pose(poseFor(r.hoursOfLife));
   $('scrState').textContent = 'Ready';
@@ -396,6 +416,7 @@ function save() {
     name, price, frequency: radio('frequency'), status: radio('status'),
     date: radio('status') === 'bought' && $('itemDate').value ? $('itemDate').value : null,
     pay: o,
+    years: radio('frequency') === 'once' && fields.years.get() > 0 ? fields.years.get() : null,
   });
   writeStore(ITEMS_KEY, items);
   $('itemName').value = '';
@@ -409,7 +430,10 @@ const compareIds = new Set(); // this visit only, not saved
 
 function renderCompare(rows) {
   const box = $('compare');
-  const picked = rows.filter((x) => compareIds.has(x.it.id)).sort((a, b) => a.r.hoursOfLife - b.r.hoursOfLife);
+  const chosen = rows.filter((x) => compareIds.has(x.it.id));
+  const perYear = chosen.length > 1 && chosen.every((x) => x.r.hoursPerYearOfUse != null);
+  const val = (x) => (perYear ? x.r.hoursPerYearOfUse : x.r.hoursOfLife);
+  const picked = chosen.sort((a, b) => val(a) - val(b));
   if (picked.length < 2) {
     box.hidden = !compareIds.size;
     box.innerHTML = compareIds.size
@@ -417,17 +441,18 @@ function renderCompare(rows) {
       : '';
     return;
   }
-  const max = picked[picked.length - 1].r.hoursOfLife || 1;
+  const max = val(picked[picked.length - 1]) || 1;
   const low = picked[0], high = picked[picked.length - 1];
-  const diff = durationParts(high.r.hoursOfLife - low.r.hoursOfLife);
+  const diff = durationParts(val(high) - val(low));
   box.hidden = false;
   box.innerHTML =
-    `<div class="scr-head"><span>Compare</span><span>${picked.length} chosen</span></div>` +
+    `<div class="scr-head"><span>Compare</span><span>${picked.length} chosen · ${perYear ? 'per year of use' : 'total'}</span></div>` +
     picked.map(({ it, r }, i) =>
-      `<div class="cmp-row${i === 0 ? ' best' : ''}"><div class="cmp-top"><span class="cmp-name">${esc(it.name)}</span><b>${fmtDuration(r.hoursOfLife)}</b></div>` +
-      `<div class="cmp-bar"><i style="width:${Math.max(3, (r.hoursOfLife / max) * 100).toFixed(1)}%"></i></div>` +
-      `<div class="cmp-meta">${esc(priceText(it.price, it.frequency))}</div></div>`).join('') +
-    `<div class="cmp-sum">&gt; <b>${esc(low.it.name)}</b> costs ${diff.n} ${diff.u} less of your life than <b>${esc(high.it.name)}</b>.</div>` +
+      `<div class="cmp-row${i === 0 ? ' best' : ''}"><div class="cmp-top"><span class="cmp-name">${esc(it.name)}</span><b>${fmtDuration(perYear ? r.hoursPerYearOfUse : r.hoursOfLife)}${perYear ? ' a year' : ''}</b></div>` +
+      `<div class="cmp-bar"><i style="width:${Math.max(3, ((perYear ? r.hoursPerYearOfUse : r.hoursOfLife) / max) * 100).toFixed(1)}%"></i></div>` +
+      `<div class="cmp-meta">${esc(priceText(it.price, it.frequency))}${it.years ? ` · used for ${it.years} yr` : ''}${perYear ? ` · ${fmtDuration(r.hoursOfLife)} in total` : ''}</div></div>`).join('') +
+    `<div class="cmp-sum">&gt; <b>${esc(low.it.name)}</b> costs ${diff.n} ${diff.u}${perYear ? ' a year' : ''} less of your life than <b>${esc(high.it.name)}</b>.</div>` +
+    (!perYear ? `<div class="cmp-meta">Tip: set years of use on each item to compare fairly.</div>` : '') +
     `<button type="button" class="linkbtn" data-act="cmpclear">Clear comparison</button>`;
 }
 
@@ -476,7 +501,7 @@ function renderList() {
     return `<li class="item"><div><div class="item-name">${esc(it.name)}</div>` +
       `<div class="item-meta"><span class="st ${it.status}">${it.status === 'bought' ? 'Bought' : 'Planned'}</span>` +
       `${esc(priceText(it.price, it.frequency))}${when}${payNote}</div></div>` +
-      `<div class="item-cost">${fmtDuration(r.hoursOfLife)}</div>` +
+      `<div class="item-cost">${fmtDuration(r.hoursOfLife)}${r.hoursPerYearOfUse != null ? `<small>${fmtDuration(r.hoursPerYearOfUse)} a year over ${it.years} yr</small>` : ''}</div>` +
       `<div class="item-actions">` +
       `<button type="button" data-act="cmp" data-id="${it.id}" aria-pressed="${compareIds.has(it.id)}">${compareIds.has(it.id) ? 'Comparing' : 'Compare'}</button>` +
       `${it.status === 'planned' ? `<button type="button" data-act="bought" data-id="${it.id}">Mark as bought</button>` : ''}` +
@@ -518,6 +543,118 @@ $('clearBtn').addEventListener('click', () => {
   }
   btn.dataset.armed = '1'; btn.textContent = 'Tap again to remove everything';
   clearTimer = setTimeout(() => { delete btn.dataset.armed; btn.textContent = 'Clear list'; }, 4000);
+});
+
+// ---------- Years of use only applies to one-off items ----------
+function syncYears() { $('yearsRow').hidden = radio('frequency') !== 'once'; }
+document.querySelectorAll('input[name=frequency]').forEach((r) => r.addEventListener('change', syncYears));
+syncYears();
+
+// ---------- Share card ----------
+async function drawShareCard() {
+  const W = 1080, H = 1080, c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  const fit = (txt, font, maxW, size) => { let s = size; do { x.font = `${s}px ${font}`; s -= 4; } while (x.measureText(txt).width > maxW && s > 24); };
+  try { await document.fonts.load('48px "Lilita One"'); await document.fonts.load('48px "Fredoka"'); } catch { /* fall back to system fonts */ }
+  const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1d6a62'); g.addColorStop(1, '#0d3a36');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.lineWidth = 14; x.strokeStyle = '#17110d'; x.strokeRect(7, 7, W - 14, H - 14);
+  const img = $('mascot');
+  if (img.naturalWidth) { const w = 760, h = w * img.naturalHeight / img.naturalWidth; x.drawImage(img, (W - w) / 2, 40, w, Math.min(h, 520)); }
+  x.textAlign = 'center'; x.fillStyle = '#fff6df';
+  fit(lastResult.priceTxt + ' on the tag.', '"Lilita One", Impact, sans-serif', 940, 84); x.fillText(lastResult.priceTxt + ' on the tag.', W / 2, 640);
+  x.fillStyle = '#ffb81f';
+  fit(`${lastResult.n} ${lastResult.u}`, '"Lilita One", Impact, sans-serif', 940, 150); x.fillText(`${lastResult.n} ${lastResult.u}`, W / 2, 800);
+  x.fillStyle = '#fff6df';
+  fit('of my life.', '"Lilita One", Impact, sans-serif', 940, 84); x.fillText('of my life.', W / 2, 900);
+  x.fillStyle = '#e8c76a';
+  fit('TruCost Generator', '"Fredoka", sans-serif', 940, 44); x.fillText('TruCost Generator', W / 2, 1010);
+  return c;
+}
+let shareBlob = null;
+async function openShare() {
+  if (!lastResult) return;
+  const msg = $('shareMsg'); msg.textContent = '';
+  try {
+    const c = await drawShareCard();
+    $('shareImg').src = c.toDataURL('image/png');
+    shareBlob = await new Promise((res) => c.toBlob(res, 'image/png'));
+  } catch { msg.textContent = '> COULD NOT BUILD THE IMAGE HERE. TRY A SCREENSHOT INSTEAD.'; shareBlob = null; }
+  $('sharePanel').hidden = false;
+  $('sharePanel').scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'nearest' });
+}
+$('out').addEventListener('click', (e) => { if (e.target.closest('button[data-act=share]')) openShare(); });
+$('shareSend').addEventListener('click', async () => {
+  const msg = $('shareMsg'), text = `${lastResult.priceTxt} on the tag. ${lastResult.n} ${lastResult.u} of my life. #TruCost`;
+  try {
+    if (shareBlob && navigator.canShare) {
+      const file = new File([shareBlob], 'trucost.png', { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text }); return; }
+    }
+    if (navigator.share) { await navigator.share({ text }); return; }
+    msg.textContent = '> SHARING IS NOT AVAILABLE HERE. PRESS AND HOLD THE IMAGE TO SAVE IT.';
+  } catch (err) { if (err && err.name !== 'AbortError') msg.textContent = '> SHARE FAILED. PRESS AND HOLD THE IMAGE TO SAVE IT.'; }
+});
+$('shareSave').addEventListener('click', () => {
+  const msg = $('shareMsg');
+  if (!shareBlob) { msg.textContent = '> NO IMAGE YET.'; return; }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(shareBlob); a.download = 'trucost.png';
+  document.body.appendChild(a); a.click(); a.remove();
+  msg.textContent = '> IF NOTHING DOWNLOADED, PRESS AND HOLD THE IMAGE TO SAVE IT.';
+});
+
+// ---------- Export and import of the memory list ----------
+const FREQS = ['once', 'monthly', 'yearly'], STATES = ['planned', 'bought'];
+function cleanItem(x) {
+  if (!x || typeof x !== 'object') return null;
+  const price = Number(x.price);
+  if (typeof x.name !== 'string' || !x.name.trim() || !(price > 0) || !FREQS.includes(x.frequency) || !STATES.includes(x.status)) return null;
+  let pay = null;
+  if (x.pay) {
+    const amount = Number(x.pay.amount), hours = Number(x.pay.hours);
+    if (!(amount > 0) || !(hours > 0) || !PERIODS[x.pay.period]) return null;
+    pay = { period: x.pay.period, amount, hours };
+  }
+  const years = Number(x.years);
+  return {
+    id: typeof x.id === 'string' && x.id ? x.id.slice(0, 40) : Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    name: x.name.trim().slice(0, 60), price, frequency: x.frequency, status: x.status,
+    date: /^\d{4}-\d{2}-\d{2}$/.test(x.date || '') ? x.date : null, pay,
+    years: x.frequency === 'once' && years > 0 ? years : null,
+  };
+}
+function openTransfer(text, note) {
+  $('transfer').hidden = false;
+  $('transferText').value = text;
+  $('transferMsg').textContent = note;
+  $('transferText').focus();
+}
+$('exportBtn').addEventListener('click', () => {
+  openTransfer(JSON.stringify({ app: 'trucost', version: 1, items }, null, 1), items.length ? `> ${items.length} ITEM${items.length === 1 ? '' : 'S'} READY TO COPY` : '> LIST IS EMPTY');
+  $('transferText').select();
+});
+$('importBtn').addEventListener('click', () => openTransfer('', '> PASTE A SAVED LIST ABOVE, THEN PRESS IMPORT'));
+$('transferCopy').addEventListener('click', async () => {
+  const t = $('transferText');
+  t.select();
+  try { await navigator.clipboard.writeText(t.value); $('transferMsg').textContent = '> COPIED'; }
+  catch { try { document.execCommand('copy'); $('transferMsg').textContent = '> COPIED'; } catch { $('transferMsg').textContent = '> PRESS AND HOLD, THEN COPY'; } }
+});
+$('transferGo').addEventListener('click', () => {
+  const msg = $('transferMsg');
+  let data;
+  try { data = JSON.parse($('transferText').value); } catch { msg.textContent = '> ERROR: THAT IS NOT A SAVED LIST'; return; }
+  const list = Array.isArray(data) ? data : data && Array.isArray(data.items) ? data.items : null;
+  if (!list) { msg.textContent = '> ERROR: NO ITEMS FOUND'; return; }
+  const have = new Set(items.map((x) => x.id));
+  const fresh = list.map(cleanItem).filter(Boolean).filter((x) => !have.has(x.id));
+  const skipped = list.length - fresh.length;
+  items = [...fresh, ...items];
+  writeStore(ITEMS_KEY, items);
+  renderList();
+  msg.textContent = `> ADDED ${fresh.length}${skipped ? `, SKIPPED ${skipped} (DUPLICATE OR INVALID)` : ''}`;
 });
 
 // ---------- Wiring ----------

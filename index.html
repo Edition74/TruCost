@@ -42,6 +42,9 @@
         <label><input type="radio" name="frequency" value="monthly"><span class="key"><i></i>Monthly</span></label>
         <label><input type="radio" name="frequency" value="yearly"><span class="key"><i></i>Yearly</span></label>
       </fieldset>
+      <div class="dials one" id="yearsRow">
+        <div data-id="years" data-label="Years you will use it (0 = skip)" data-unit="YRS" data-min="0" data-max="30" data-step="0.5" data-value="0"></div>
+      </div>
     </section>
 
     <section class="module">
@@ -103,6 +106,16 @@
     </div>
   </section>
 
+  <section class="module" id="sharePanel" hidden>
+    <h2>Share card</h2>
+    <img id="shareImg" alt="Share card showing this purchase's cost in hours of your life" width="540" height="540">
+    <div class="row-btns">
+      <button id="shareSend" type="button" class="key-btn">Share</button>
+      <button id="shareSave" type="button" class="key-btn alt">Download</button>
+    </div>
+    <p class="readline" id="shareMsg" aria-live="polite"></p>
+  </section>
+
   <section class="module" id="saveCard" hidden>
     <h2>Store to memory</h2>
     <label class="lcd-field">Name
@@ -148,12 +161,25 @@
       <div id="totals"></div>
       <ul id="list" class="items"></ul>
     </div>
+    <div class="row-btns tools">
+      <button id="exportBtn" type="button" class="linkbtn">Export list</button>
+      <button id="importBtn" type="button" class="linkbtn">Import list</button>
+    </div>
+    <div id="transfer" hidden>
+      <label class="lcd-field" for="transferText">Copy this to keep it, or paste a saved list here</label>
+      <textarea id="transferText" rows="6" spellcheck="false"></textarea>
+      <div class="row-btns">
+        <button id="transferCopy" type="button" class="key-btn alt">Copy</button>
+        <button id="transferGo" type="button" class="key-btn">Import pasted list</button>
+      </div>
+      <p class="readline" id="transferMsg" aria-live="polite"></p>
+    </div>
     <button id="clearBtn" type="button" class="linkbtn" hidden>Clear list</button>
     <p class="engrave note">Saved on this device only. Nothing is sent anywhere.</p>
   </section>
 
   <footer class="foot">
-    <p>Draft v0.11. Tax is a UK estimate (England, Wales, NI). Hourly and daily pay is counted for weeks worked only. Life expectancy is a rough estimate, not a prediction.</p>
+    <p>Draft v0.12. Tax is a UK estimate (England, Wales, NI) using 2026/27 rates. Life expectancy uses ONS UK period life tables 2021 to 2023 and is an average, not a prediction. Hourly and daily pay is counted for weeks worked only.</p>
   </footer>
 </div>
 </main>

@@ -3,16 +3,34 @@
 // Core idea: money is a claim on your time. A price is converted into the hours of
 // your life you must work to earn it, then compared with the life you have left.
 
-// Approximate life expectancy at birth (UK-ish, period figures). Editable by the user.
-const LIFE_EXPECTANCY_AT_BIRTH = { male: 79, female: 83, average: 81 };
+// Period life expectancy e(x): years still expected at age x, UK, ONS national life
+// tables 2021 to 2023 (https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/lifeexpectancies).
+// Linear interpolation between the published ages. "Period" figures describe today's
+// mortality rates; younger people will on average live somewhat longer, so this is
+// a cautious estimate. Review when ONS publishes a new release.
+const LIFE_TABLE = {
+  male:   [[0, 78.82], [10, 69.25], [20, 59.38], [30, 49.71], [40, 40.21], [50, 31.09], [60, 22.51], [65, 18.51], [70, 14.79], [80, 8.31], [90, 3.90]],
+  female: [[0, 82.77], [10, 73.13], [20, 63.21], [30, 53.36], [40, 43.65], [50, 34.23], [60, 25.23], [65, 20.96], [70, 16.92], [80, 9.68], [90, 4.55]],
+};
 
-// Survivor bonus: someone who has already reached age `a` is expected to live
-// longer than the at-birth figure. 0.00156 * a^2 fits UK cohort tables roughly
-// (+2.5y at 40, +6.6y at 65, +10y at 80). This is a placeholder until we plug in
-// real life tables (ONS) per sex, and later by demographic factors.
+function remainingYears(age, sex) {
+  if (sex !== 'male' && sex !== 'female') {
+    return (remainingYears(age, 'male') + remainingYears(age, 'female')) / 2;
+  }
+  const t = LIFE_TABLE[sex];
+  if (age <= t[0][0]) return t[0][1];
+  for (let i = 1; i < t.length; i++) {
+    if (age <= t[i][0]) {
+      const [x0, y0] = t[i - 1], [x1, y1] = t[i];
+      return y0 + ((y1 - y0) * (age - x0)) / (x1 - x0);
+    }
+  }
+  const [xl, yl] = t[t.length - 1];
+  return Math.max(1, yl - 0.35 * (age - xl)); // beyond 90: a gentle taper
+}
+
 function expectedAgeAtDeath(age, sex) {
-  const base = LIFE_EXPECTANCY_AT_BIRTH[sex] ?? LIFE_EXPECTANCY_AT_BIRTH.average;
-  return base + 0.00156 * age * age;
+  return age + remainingYears(age, sex);
 }
 
 
@@ -73,6 +91,7 @@ function calculate(input) {
     sex = 'average',
     retirementAge = 67,
     lifeExpectancyOverride = null, // expected age at death, if the user knows better
+    yearsOfUse = null,     // how long a one-off purchase will be used
   } = input;
 
   const deathAge = lifeExpectancyOverride ?? expectedAgeAtDeath(age, sex);
@@ -106,6 +125,7 @@ function calculate(input) {
     totalCost, horizonYears,
     hoursOfLife, hoursOfWork,
     workingDays: hoursOfLife / 8,
+    hoursPerYearOfUse: frequency === 'once' && yearsOfUse > 0 ? hoursOfLife / yearsOfUse : null,
     shareOfWorkingLife: workingLifeHoursLeft > 0 ? hoursOfLife / workingLifeHoursLeft : null,
     shareOfAwakeLife: awakeHoursLeft > 0 ? hoursOfLife / awakeHoursLeft : null,
   };
