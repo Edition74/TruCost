@@ -251,6 +251,20 @@ function reveal() {
   $('screenWrap').scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' });
 }
 
+// ---------- Mascot poses ----------
+// Extra artwork is optional: drop mascot-<pose>.webp next to index.html (the build
+// embeds any that exist). A missing or broken file falls back to the idle pose.
+const POSES = { idle: $('mascot').getAttribute('src'), thinking: 'mascot-thinking.webp', shrug: 'mascot-shrug.webp', cheer: 'mascot-cheer.webp', shock: 'mascot-shock.webp' };
+function pose(name) {
+  const img = $('mascot');
+  if (!img || img.dataset.pose === name) return;
+  img.dataset.pose = name;
+  img.onerror = () => { img.onerror = null; img.src = POSES.idle; };
+  img.src = POSES[name] || POSES.idle;
+  if (!reduceMotion()) { img.classList.remove('pop'); void img.offsetWidth; img.classList.add('pop'); }
+}
+const poseFor = (hours) => (hours >= 160 ? 'shock' : hours < 8 ? 'cheer' : 'idle');
+
 function renderResult(p, price) {
   const frequency = radio('frequency');
   const { r, tax } = computeItem({ price, frequency }, p);
@@ -293,7 +307,8 @@ function renderResult(p, price) {
     `<div class="out-big"><span class="n">${n}</span><span class="u">${u}</span></div>` +
     `<div class="out-sub">of your life. ${sub}</div>` +
     `<div class="reads">${reads}</div>${bar}<dl class="rows">${rows}</dl>`;
-  says(`<span>${n} ${u}.</span><em>Still want it?</em>`);
+  says(`<span>${priceText(price, frequency)} on the tag.</span><em>${n} ${u} of your life.</em>`);
+  pose(poseFor(r.hoursOfLife));
   $('scrState').textContent = 'Ready';
 }
 
@@ -312,6 +327,7 @@ function run() {
   if (missing.length || !p) {
     lamp('lampErr', true);
     says('<span>Oi!</span><em>A dial is missing.</em>');
+    pose('shrug');
     $('scrState').textContent = 'Error';
     $('out').innerHTML =
       `<div class="ln err">&gt; ERROR: MISSING ${esc(missing.join(', ').toUpperCase())}</div>` +
@@ -329,6 +345,7 @@ function run() {
   if (reduceMotion()) { finish(); return; }
   lamp('lampBusy', true);
   says('<span>Crunching&hellip;</span><em>Hold tight.</em>');
+  pose('thinking');
   $('scrState').textContent = 'Computing';
   $('out').innerHTML = `<div class="ln">&gt; COMPUTING TRUE COST</div><div class="prog"><i></i></div>`;
   setTimeout(finish, 450);
