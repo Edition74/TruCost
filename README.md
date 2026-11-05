@@ -20,3 +20,10 @@ No build step. Open `index.html` in a browser. To test the maths: `node test.js`
 - Tax estimator so users can enter gross pay
 - Inflation and investment-return option (what a recurring cost would have grown to)
 - Save and compare purchases
+
+
+## Install on a phone (Android)
+
+The app is an installable web app. Once it is hosted (GitHub Pages: Settings, Pages, deploy from branch `main`, folder `/ (root)`), open the link in Chrome on the phone, then menu, "Install app" (or "Add to Home Screen"). It works offline and keeps your list on that phone only. Use Export list before switching phones or clearing browser data.
+
+When any file changes, bump `VERSION` in `sw.js` so installed copies refresh.
